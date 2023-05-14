@@ -4,6 +4,8 @@ import path from "path"
 import dfxJson from "./dfx.json"
 import fs from "fs"
 
+
+
 const isDev = process.env["DFX_NETWORK"] !== "ic"
 
 let canisterIds

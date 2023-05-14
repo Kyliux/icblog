@@ -1,0 +1,61 @@
+// have been modified by a savage
+  async function uploadFile(file) {
+    // Convert the file to a Blob
+
+
+        // Convert the file to a Uint8Array
+        const uint8Array = new Uint8Array(file.result);
+        console.log("tile file : ", uint8Array);
+
+        
+        // Create a new asset in the file storage canister
+        const result = await FileStorageActor.create_chunk("", uint8Array, 0);
+        console.error("no error WTF:", updatedResult.err);
+
+    if (result.ok) {
+      // Asset creation successful, refresh the media files list
+      const updatedResult = await FileStorageActor.assets_list();
+      if (updatedResult.ok) {
+        mediaFiles = updatedResult.ok;
+      } else {
+        console.error("Error fetching media files:", updatedResult.err);
+      }
+    } else {
+      console.error("Error uploading file:", result.err);
+    }
+  }
+
+
+
+
+// have been modified by a savage
+async function uploadFile(file) {
+    // Convert the file to a Blob
+    const blob = new Blob([file], { type: file.type });
+
+    // Log the contents of the blob
+    const reader = new FileReader();
+    reader.onload = function() {
+        console.log(reader.result);
+    };
+    reader.readAsDataURL(blob);  // Or readAsArrayBuffer, readAsBinaryString, readAsDataURL, etc.
+
+
+    // Create a new asset in the file storage canister
+    const result = await FileStorageActor.create_chunk("", blob, 0);
+    if (result.ok) {
+      // Asset creation successful, refresh the media files list
+      const updatedResult = await FileStorageActor.assets_list();
+      if (updatedResult.ok) {
+        mediaFiles = updatedResult.ok;
+      } else {
+        console.error("Error fetching media files:", updatedResult.err);
+      }
+    } else {
+      console.error("Error uploading file:", result.err);
+    }
+  }
+
+
+
+

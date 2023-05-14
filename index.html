@@ -6,8 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IC Blog</title>
 </head>
+
+
 <body>
-<div id="root"></div>
+
+ 
+
+<div id="root"> </div>
+<script src="/frontend/assets/trianglify.min.js"></script>
+
 <script type="module">
   /**
    * @dfinity/agent requires this. Can be removed once it's fixed
@@ -16,7 +23,25 @@
 
   window.global = window
   window.Buffer = Buffer
+
+
 </script>
+
 <script type="module" src="/frontend/main.js"></script>
+
+<script>
+
+function addTriangleTo(target) {
+    var dimensions = target.getClientRects()[0];
+    var pattern = Trianglify({
+        width: window.innerWidth, 
+        height: window.innerWidth,
+      });
+    target.style['background-image'] = 'url(' + pattern.png() + ')';
+}
+
+addTriangleTo(document.body)
+</script>
+
 </body>
 </html>

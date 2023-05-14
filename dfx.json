@@ -4,9 +4,24 @@
       "main": "canisters/blog/main.mo",
       "type": "motoko"
     },
+      "gallery": {
+      "main": "canisters/blog/gallery.mo",
+      "type": "motoko"
+    },
+    "file_scaling_manager": {
+      "main": "frontend/src/FileScalingManager.mo",
+      "type": "motoko",
+      "dependencies": []
+    },
+    "file_storage": {
+      "main": "frontend/src/FileStorage.mo",
+      "type": "motoko",
+      "dependencies": []
+    },
     "assets": {
       "dependencies": [
-        "blog"
+        "blog",
+        "gallery"
       ],
       "frontend": {
         "entrypoint": "dist/index.html"
@@ -19,7 +34,8 @@
   },
   "defaults": {
     "build": {
-      "packtool": ""
+      "args": "",
+      "packtool": "vessel sources"
     }
   },
   "networks": {

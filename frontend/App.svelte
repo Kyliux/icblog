@@ -1,4 +1,6 @@
 <script>
+
+  
   /*
    * Connect2ic provides essential utilities for IC app development
    */
@@ -9,15 +11,18 @@
   
   /*
    * Import canister definitions like this:
-   */
-  import * as blog from "../.dfx/local/canisters/blog"
+  */
+   import * as gallery from "../.dfx/local/canisters/gallery" 
+   import * as blog from "../.dfx/local/canisters/blog"   
+
 
   /*
    * Svelte router import so we can add custom URLS
    */
   import { Router, Link, Route } from "svelte-navigator";
-  import About from "./routes/About.svelte";
+  import About from "./routes/about.svelte";
   import Home from "./routes/Home.svelte";
+  import Gallery from "./src/old/Gallery.svelte";
   import Create from "./routes/Create.svelte";
   import Detail from "./routes/Detail.svelte";
   import Update from "./routes/Update.svelte";
@@ -26,7 +31,7 @@
   // Connect2ic client
   const client = createClient({
     canisters: {
-      blog,
+      blog, gallery,
     },
     providers: defaultProviders,
     globalProviderConfig: {
@@ -34,6 +39,8 @@
     },
   });
 </script>
+
+
 
 <Connect2ICProvider client={client}>
   <div class="App">
@@ -48,12 +55,14 @@
                   IC Blogsite
               </a>
               <Link class="nav-link" to="/">Home</Link>
+              <Link class="nav-link" to="gallery">Gallery</Link>
               <Link class="nav-link" to="about">About</Link>
           </nav>
       </header>
       <div class="content">
           <Route path="/" component={Home} />
           <Route path="about" component={About} />
+          <Route path="gallery" component={Gallery} />
           <Route path="create" component={Create} />
           <Route path="post/:id" component="{Detail}" /> <!-- Dynamic routes for post detail, update and delete-->
           <Route path="update/:id" component="{Update}" /> 
@@ -62,6 +71,8 @@
     </Router>
   </div>
 </Connect2ICProvider>
+
+
 
 <style global> 
   /* 
@@ -90,7 +101,6 @@
     position: fixed;
     top: 0;
     left: 0;
-    background-color: white;
     z-index: 99999;
   }
 

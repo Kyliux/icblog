@@ -1,91 +1,122 @@
-
 <script>
-  import { useConnect, useCanister } from "@connect2ic/svelte"
+  import { useConnect, useCanister } from "@connect2ic/svelte";
   import { onMount } from 'svelte';
-  import { Actor, HttpAgent } from '@dfinity/agent';
+  import { HttpAgent } from '@dfinity/agent';
   import Masonry from './Masonry.svelte';
   import { Link } from "svelte-navigator";
+
   import { Ed25519KeyIdentity } from "@dfinity/identity";
-  import test from "tape";
+  import { getActor } from "./actor.js";
+  import { updateChecksum }  from "../src/utils.js";
 
+  let motoko_identity = Ed25519KeyIdentity.generate();
 
+  // Import the necessary IDL files
+  import { idlFactory as fileStorageIdlFactory } from "../../.dfx/local/canisters/file_storage/file_storage.did.js";
+  import { idlFactory as fileScalingManagerIdlFactory } from "../../.dfx/local/canisters/file_scaling_manager/file_scaling_manager.did.js";
 
+  // Import the canister IDs
+  import canisterIds from "../../.dfx/local/canister_ids.json";
 
-  const { isConnected, principal } = useConnect({
-        onConnect: () => {
-            console.log("Connected!")
-            //list_posts(true) // List all posts for connected user
-        },
-        onDisconnect: () => {
-            console.log("Disconnected!")
-            //list_posts(false) // List only published posts for disconnected user
-        }
-    })
-
-    const canisterIdResult="";
-    const [FileScalingManager] = useCanister("file_scaling_manager", { mode: "anonymous" });
-  const [FileStorage] = useCanister("file_storage", { mode: "anonymous" });
-
+  let test = "default";
+  let file_scaling_manager_actor;
+  let file_storage_actor;
   let mediaFiles = [];
+  let checksum = 0;
 
   onMount(async () => {
+    // Create actors using the agent and IDL factories
+    file_scaling_manager_actor = await getActor(
+      canisterIds.file_scaling_manager.local,
+      fileScalingManagerIdlFactory,
+      motoko_identity
+    );
+    file_scaling_manager_actor.init();
 
-    // Ensure the actor is ready
-    if ($FileScalingManager) {
-      console.error("FileScalingManager is ready :", FileScalingManager);
-
-      let canisterIdResult = await $FileScalingManager.get_file_storage_canister_id();
-      if (canisterIdResult.ok) {
-        console.error("canisterIdResult:", canisterIdResult);
-        const fileStorageActor = Actor.createActor(fileStorageIdlFactory, { agent, canisterId: canisterIdResult.ok });
-
-        // Fetch the media files from the file storage canister
-        const result = await fileStorageActor.assets_list();
-        if (result.ok) {
-          mediaFiles = result.ok;
-        } else {
-          console.error("Error fetching media files:", result.err);
-        }
+    file_storage_actor = await getActor(
+      test= await file_scaling_manager_actor.get_file_storage_canister_id(),
+      fileStorageIdlFactory,
+      motoko_identity
+    );
+    console.log("test  ", test);
+    console.log("file_storage_actor  ", file_storage_actor);
+    if (file_storage_actor) {
+      // Fetch the media files from the file storage canister
+      const result = await file_storage_actor.assets_list();
+      if (result.ok) {
+        mediaFiles = result.ok;
       } else {
-        console.error("Error fetching file storage canister ID:", canisterIdResult.err);
+        console.error("Error fetching media files:", result.err);
       }
+    } else {
+      console.error("Error creating file storage actor");
     }
   });
 
   async function uploadFile(file) {
+  if (file_storage_actor) {
     // Convert the file to a Blob
     const blob = new Blob([file], { type: file.type });
 
+    var batch_id = Math.random().toString(36).substring(2, 7);
 
-    if($FileStorage){
-    // Create a new chunk in the file storage canister
-    const chunkIdResult = await $FileStorage.create_chunk("", blob, 0);
-    if (chunkIdResult.ok) {
-      const chunkId = chunkIdResult.ok;
-    }
-      // Commit the batch and create the asset in the file storage canister
-      const commitResult = await $FileStorage.commit_batch("", [chunkId], {
-        checksum: 0, // Provide the correct checksum
-        content_encoding: "",
-        content_type: file.type,
-        filename: file.name
-      });
-      if (commitResult.ok) {
-        // Asset creation successful, refresh the media files list
-        const updatedResult = await $FileStorage.assets_list();
-        if (updatedResult.ok) {
-          mediaFiles = updatedResult.ok;
-        } else {
-          console.error("Error fetching media files:", updatedResult.err);
-        }
-      } else {
-        console.error("Error committing batch and creating asset:", commitResult.err);
+    const uploadChunk = async ({ chunk, order }) => {
+      console.error("return a chunk");
+
+      return file_storage_actor.create_chunk(batch_id, chunk, order);
+    };
+
+    const asset_reader = new FileReader(file);
+
+    asset_reader.onloadend = async () => {
+      const asset_unit8Array = new Uint8Array(asset_reader.result);
+      console.error("return a chunk", asset_unit8Array);
+      const promises = [];
+      const chunkSize = 2000000;
+      let checksum = 0;
+
+      for (let start = 0, index = 0; start < asset_unit8Array.length; start += chunkSize, index++) {
+        const chunk = asset_unit8Array.slice(start, start + chunkSize);
+
+       checksum = updateChecksum(chunk, checksum);
+
+        promises.push(uploadChunk({ chunk, order: index }));
+        console.error("return a chunk", asset_unit8Array);
+
       }
-    } else {
-      console.error("Error creating chunk:", chunkIdResult.err);
+
+      const chunk_ids = await Promise.all(promises);
+
+      // Perform further operations with chunk_ids or handle the upload completion
+    };
+
+    asset_reader.readAsArrayBuffer(file);
+    console.error("readAsArrayBuffer assetreader", asset_reader);
+
+  const asset_filename = file_storage_actor.asset.filename;
+  const asset_content_type = mime.getType(file_path);
+
+  const { ok: asset_id } = await file_storage_actors.motoko.commit_batch(
+    batch_id,
+    chunk_ids,
+    {
+      filename: asset_filename,
+      checksum: checksum,
+      content_encoding: { Identity: null },
+      content_type: asset_content_type,
     }
+  );
+
+  const { ok: asset } = await file_storage_actors.motoko.get(asset_id);
+
+
+
+
   }
-  </script>
+}
+
+
+</script>
 
 <h1>Gallery</h1>
 

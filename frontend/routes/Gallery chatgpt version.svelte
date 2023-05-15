@@ -7,7 +7,6 @@
 
   import { Ed25519KeyIdentity } from "@dfinity/identity";
   import { getActor } from "./actor.js";
-  import { ofBlob } from "../src/CRC32";
 
   let motoko_identity = Ed25519KeyIdentity.generate();
 
@@ -18,7 +17,6 @@
   // Import the canister IDs
   import canisterIds from "../../.dfx/local/canister_ids.json";
 
-  let test = "default";
   let file_scaling_manager_actor;
   let file_storage_actor;
   let mediaFiles = [];
@@ -30,15 +28,12 @@
       fileScalingManagerIdlFactory,
       motoko_identity
     );
-    file_scaling_manager_actor.init();
-
     file_storage_actor = await getActor(
-      test= await file_scaling_manager_actor.get_file_storage_canister_id(),
+      await file_scaling_manager_actor.get_file_storage_canister_id(),
       fileStorageIdlFactory,
       motoko_identity
     );
-    console.log("test  ", test);
-    console.log("file_storage_actor  ", file_storage_actor);
+
     if (file_storage_actor) {
       // Fetch the media files from the file storage canister
       const result = await file_storage_actor.assets_list();
@@ -58,7 +53,7 @@
       const blob = new Blob([file], { type: file.type });
 
       // Create a new chunk in the file storage canister
-      const chunkIdResult = await file_storage_actor.uploadChunk("", blob, 0);
+      const chunkIdResult = await file_storage_actor.create_chunk("", blob, 0);
       if (chunkIdResult.ok) {
         const chunkId = chunkIdResult.ok;
 

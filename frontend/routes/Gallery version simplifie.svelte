@@ -22,27 +22,33 @@
         }
     })
 
- 
+    const canisterIdResult="";
     const [FileScalingManager] = useCanister("file_scaling_manager", { mode: "anonymous" });
   const [FileStorage] = useCanister("file_storage", { mode: "anonymous" });
 
   let mediaFiles = [];
 
   onMount(async () => {
-    // Fetch the file storage canister ID
-    const canisterIdResult = await $FileScalingManager.get_file_storage_canister_id();
-    if (canisterIdResult.ok) {
-      const fileStorageCanisterId = canisterIdResult.ok;
 
-      // Fetch the media files from the file storage canister
-      const result = await FileStorage.assets_list();
-      if (result.ok) {
-        mediaFiles = result.ok;
+    // Ensure the actor is ready
+    if ($FileScalingManager) {
+      console.error("FileScalingManager is ready :", FileScalingManager);
+
+      let canisterIdResult = await $FileScalingManager.get_file_storage_canister_id();
+      if (canisterIdResult.ok) {
+        console.error("canisterIdResult:", canisterIdResult);
+        const fileStorageActor = Actor.createActor(fileStorageIdlFactory, { agent, canisterId: canisterIdResult.ok });
+
+        // Fetch the media files from the file storage canister
+        const result = await fileStorageActor.assets_list();
+        if (result.ok) {
+          mediaFiles = result.ok;
+        } else {
+          console.error("Error fetching media files:", result.err);
+        }
       } else {
-        console.error("Error fetching media files:", result.err);
+        console.error("Error fetching file storage canister ID:", canisterIdResult.err);
       }
-    } else {
-      console.error("Error fetching file storage canister ID:", canisterIdResult.err);
     }
   });
 
@@ -50,11 +56,13 @@
     // Convert the file to a Blob
     const blob = new Blob([file], { type: file.type });
 
+
+    if($FileStorage){
     // Create a new chunk in the file storage canister
     const chunkIdResult = await $FileStorage.create_chunk("", blob, 0);
     if (chunkIdResult.ok) {
       const chunkId = chunkIdResult.ok;
-
+    }
       // Commit the batch and create the asset in the file storage canister
       const commitResult = await $FileStorage.commit_batch("", [chunkId], {
         checksum: 0, // Provide the correct checksum
@@ -64,7 +72,7 @@
       });
       if (commitResult.ok) {
         // Asset creation successful, refresh the media files list
-        const updatedResult = await FileStorage.assets_list();
+        const updatedResult = await $FileStorage.assets_list();
         if (updatedResult.ok) {
           mediaFiles = updatedResult.ok;
         } else {

@@ -7,6 +7,7 @@ import Time "mo:base/Time";
 import FileStorage "FileStorage";
 import Types "./types";
 
+// was named FileScalingManager before
 actor FileScalingManager {
 	let ACTOR_NAME : Text = "FileScalingManager";
 	let CYCLE_AMOUNT : Nat = 1_000_000_000_000;

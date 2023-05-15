@@ -22,7 +22,7 @@
   import { Router, Link, Route } from "svelte-navigator";
   import About from "./routes/about.svelte";
   import Home from "./routes/Home.svelte";
-  import Gallery from "./src/old/Gallery.svelte";
+  import Gallery from "./routes/Gallery.svelte";
   import Create from "./routes/Create.svelte";
   import Detail from "./routes/Detail.svelte";
   import Update from "./routes/Update.svelte";

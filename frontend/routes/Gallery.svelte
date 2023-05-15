@@ -1,41 +1,68 @@
-
 <script>
-  import { useConnect, useCanister } from "@connect2ic/svelte"
+  import { useConnect, useCanister } from "@connect2ic/svelte";
   import { onMount } from 'svelte';
-  import { Actor, HttpAgent } from '@dfinity/agent';
+  import { HttpAgent } from '@dfinity/agent';
   import Masonry from './Masonry.svelte';
   import { Link } from "svelte-navigator";
+
   import { Ed25519KeyIdentity } from "@dfinity/identity";
-  import test from "tape";
+  import { getActor } from "./actor.js";
 
 
+  let motoko_identity = Ed25519KeyIdentity.generate();
+
+  // Import the necessary IDL files
+  import { idlFactory as fileStorageIdlFactory } from "../../.dfx/local/canisters/file_storage/file_storage.did.js";
+  import { idlFactory as fileScalingManagerIdlFactory } from "../../.dfx/local/canisters/file_scaling_manager/file_scaling_manager.did.js";
+
+  // Import the canister IDs
+  import canisterIds from "../../.dfx/local/canister_ids.json";
 
 
-  const { isConnected, principal } = useConnect({
-        onConnect: () => {
-            console.log("Connected!")
-            //list_posts(true) // List all posts for connected user
-        },
-        onDisconnect: () => {
-            console.log("Disconnected!")
-            //list_posts(false) // List only published posts for disconnected user
-        }
-    })
+    const testok = false ;
+  // Create an HTTP agent
+  const agent = new HttpAgent();
+  const canister_id2="";
+  let file_scaling_manager_actors = {};
+let file_storage_actors = {};
 
-    const canisterIdResult="";
-    const [FileScalingManager] = useCanister("file_scaling_manager", { mode: "anonymous" });
-  const [FileStorage] = useCanister("file_storage", { mode: "anonymous" });
+  // Create actors using the agent and IDL factories
+  async function test()  {
+  file_scaling_manager_actors.motoko = await getActor(
+    canisterIds.file_scaling_manager.local,
+    fileScalingManagerIdlFactory,
+    motoko_identity
+  );
+
+  const response = await file_scaling_manager_actors.motoko.init()
+  console.log("response init scaling manager : !", response);
+
+  canister_id2 = await file_scaling_manager_actors.motoko.get_file_storage_canister_id()
+
+};
+
+// Create actors using the agent and IDL factories
+async function test2()  {
+  file_storage_actors.motoko = await getActor(
+    canister_id2,
+    fileStorageIdlFactory,
+    motoko_identity
+  );
+   response = await file_storage_actors.motoko.version();
+
+  console.log("response storage actor version: !", response);
+  return true;
+};
 
   let mediaFiles = [];
 
   onMount(async () => {
-    // Fetch the file storage canister ID
-     canisterIdResult = await $FileScalingManager.get_file_storage_canister_id();
-    if (canisterIdResult.ok) {
-      console.error("canisterIdResult:", canisterIdResult);
+    test();
+    testok = test2();
+    if (testok) {
 
       // Fetch the media files from the file storage canister
-      const result = await $canisterIdResult.assets_list();
+      const result = await file_storage_actors.motoko.assets_list();
       if (result.ok) {
         mediaFiles = result.ok;
       } else {
@@ -50,13 +77,15 @@
     // Convert the file to a Blob
     const blob = new Blob([file], { type: file.type });
 
+    if (testok) {
+
     // Create a new chunk in the file storage canister
-    const chunkIdResult = await $canisterIdResult.create_chunk("", blob, 0);
+    const chunkIdResult = await file_storage_actors.motoko.create_chunk("", blob, 0);
     if (chunkIdResult.ok) {
       const chunkId = chunkIdResult.ok;
 
       // Commit the batch and create the asset in the file storage canister
-      const commitResult = await $canisterIdResult.commit_batch("", [chunkId], {
+      const commitResult = await file_storage_actors.motoko.commit_batch("", [chunkId], {
         checksum: 0, // Provide the correct checksum
         content_encoding: "",
         content_type: file.type,
@@ -64,7 +93,7 @@
       });
       if (commitResult.ok) {
         // Asset creation successful, refresh the media files list
-        const updatedResult = await $canisterIdResult.assets_list();
+        const updatedResult = await file_storage_actors.motoko.assets_list();
         if (updatedResult.ok) {
           mediaFiles = updatedResult.ok;
         } else {
@@ -76,8 +105,8 @@
     } else {
       console.error("Error creating chunk:", chunkIdResult.err);
     }
-  }
-  </script>
+  }}
+</script>
 
 <h1>Gallery</h1>
 

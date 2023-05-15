@@ -38,4 +38,4 @@ const getActor = async (canisterId, idlFactory, identity) => {
 
   return actor;
 };
-
+export { getActor };

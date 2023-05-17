@@ -14,14 +14,11 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Timer "mo:base/Timer";
 
-
 import { ofBlob } "./CRC32";
 
 import Types "./types";
 
 import Utils "./utils";
-
-
 
 actor class FileStorage() = this {
 	type Asset = Types.Asset;
@@ -45,7 +42,6 @@ actor class FileStorage() = this {
 	stable var assets_stable_storage : [(Asset_ID, Asset)] = [];
 
 	private var chunk_id_count : Chunk_ID = 0;
-
 
 	private func compare(a : AssetChunk, b : AssetChunk) : Order.Order {
 		if (a.order < b.order) {
@@ -144,14 +140,13 @@ actor class FileStorage() = this {
 	public shared ({ caller }) func delete_asset(id : Asset_ID) : async Result.Result<Text, Text> {
 		switch (Map.get(assets, thash, id)) {
 			case (?asset) {
-				if (asset.owner == Principal.toText(caller)) {
+				//if (asset.owner == Principal.toText(caller)) {
 					Map.delete(assets, thash, id);
+
 					return #ok("Asset deleted successfully.");
-				 } else {
-       				 // Print the owner of the asset and the caller
-      				let v = Text.concat("Permission denied: You are not the owner of this asset. Caller: ", Principal.toText(caller));
-      			    return #err(v);
-   			   }
+			//	} else {
+			//		return #err("Permission denied: You are not the owner of this asset.");
+			//	};
 			};
 			case (_) {
 				return #err("Asset not found.");
@@ -336,8 +331,6 @@ actor class FileStorage() = this {
 		return 0;
 	};
 
-
-
 	// ------------------------- System Methods -------------------------
 	system func preupgrade() {
 		assets_stable_storage := Iter.toArray(Map.entries(assets));
@@ -349,4 +342,3 @@ actor class FileStorage() = this {
 		assets_stable_storage := [];
 	};
 };
-

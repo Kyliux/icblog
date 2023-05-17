@@ -12,7 +12,6 @@
   /*
    * Import canister definitions like this:
   */
-   import * as gallery from "../.dfx/local/canisters/gallery" 
    import * as blog from "../.dfx/local/canisters/blog"   
 
 

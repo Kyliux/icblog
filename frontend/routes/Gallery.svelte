@@ -26,7 +26,6 @@
     console.error("Error initializing actors:", error);
   }
 });
- // afterUpdate(init);
   
 
   async function handleFileUpload(files) {
@@ -43,7 +42,6 @@
       console.error("Error fetching media files:", result.err);
     }
      // Call initPackery after updating mediaFiles
-     initPackery(container);
   });
 }
 </script>
@@ -55,7 +53,7 @@
 <div bind:this={container} class="packery-grid">
   {#each mediaFiles as file (file.id)}
     <div class="grid-item" >
-        <img src="{file.url}" alt="{file.filename}" width="100%" on:contextmenu="{() => removeGridItem(file.url)}" />
+        <img src="{file.url}" alt="{file.filename}" width="200px" on:contextmenu="{() => removeGridItem(file.url)}" />
         <div class=name >
         LOL
         </div>

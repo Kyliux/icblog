@@ -15,7 +15,7 @@ import {
 let motoko_identity = Ed25519KeyIdentity.generate();
 let fileScalingManagerActor;
 let fileStorageActor;
-let packeryInstance;
+let test="";
 let mediaFiles = [];
 
 export async function initActors() {
@@ -23,14 +23,16 @@ export async function initActors() {
     canisterIds.file_scaling_manager.local,
     fileScalingManagerIdlFactory,
     motoko_identity
-  );
+
+  );  console.log("fileScalingManagerActor READY  ", fileScalingManagerActor);
+  fileScalingManagerActor.init();
+
   fileStorageActor = await getActor(
     await fileScalingManagerActor.get_file_storage_canister_id(),
     fileStorageIdlFactory,
     motoko_identity
   );
 
-  console.log("fileScalingManagerActor READY  ", fileScalingManagerActor);
   console.log("fileStorageActor READY ", fileStorageActor);
   return true;
 }
@@ -110,6 +112,7 @@ export function initPackery(container) {
     packery.getItemElements().forEach((item) => {
       item.querySelector('img').addEventListener('load', () => {
         packery.layout();
+        packery.reloadItems();
       });
     });
   } else {
@@ -118,11 +121,12 @@ export function initPackery(container) {
 }
 
 
+
+
 export async function removeGridItem(url) {
   try {
     console.log("Removing grid item with URL:", url);
   const assetId = getAssetId(url);
-  printOwnerPrincipal(assetId);
 
   console.log("Removing grid item with Asset ID:", assetId);
 
@@ -148,8 +152,3 @@ function getAssetId(url) {
   return assetId;
 }
 
-//function to get the principal id from assetid
-async function printOwnerPrincipal(assetId)  {
-  let asset = fileStorageActor.get(assetId);
-  console.log("this is the PRINCIPALID of the item:", asset.filename);
-}

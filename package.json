@@ -11,28 +11,30 @@
     "@connect2ic/svelte": "^0.1.1",
     "@dfinity/agent": "^0.15.0",
     "@dfinity/assets": "^0.15.0",
+    "@dfinity/auth-client": "^0.15.3",
     "@dfinity/candid": "^0.15.0",
     "@dfinity/identity": "^0.15.0",
     "@dfinity/principal": "^0.15.0",
+    "crc-32": "^1.2.2",
+    "lodash": "^4.17.21",
     "marked": "^4.0.18",
     "masonry": "^0.0.2",
+    "masonry-layout": "^4.2.2",
+    "packery": "^2.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-masonry-css": "^1.0.16",
     "react-scripts": "^2.1.3",
-    "svelte-navigator": "^3.1.5",
-    "@dfinity/auth-client": "^0.15.3",
-    "crc-32": "^1.2.2",
-    "lodash": "^4.17.21"
+    "svelte-navigator": "^3.1.5"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "next",
     "buffer": "^6.0.3",
-    "svelte": "^3.42.5",
-    "svelte-preprocess": "^4.10.7",
-    "vite": "^2.9.13",
     "mime": "^3.0.0",
     "sha256": "^0.2.0",
-    "tape": "^5.6.1"
+    "svelte": "^3.42.5",
+    "svelte-preprocess": "^4.10.7",
+    "tape": "^5.6.1",
+    "vite": "^2.9.13"
   }
 }

@@ -28,8 +28,6 @@
   import Update from "./routes/Update.svelte";
   import Delete from "./routes/Delete.svelte";
 
-
-
   // Connect2ic client
   const client = createClient({
     canisters: {
@@ -40,24 +38,6 @@
       dev: import.meta.env.DEV,
     },
   });
-
-
-  function addTriangleTo(target) {
-  var dimensions = target.getClientRects()[0];
-  var pattern = Trianglify({
-    width: window.innerWidth,
-    height: window.innerHeight, // Use window.innerHeight for full-page background
-    cell_size: 100, // Adjust the cell size as needed
-    variance: 1,
-    x_colors: 'Blues', // Adjust the color scheme as desired
-  });
-  target.style['background-image'] = 'url(' + pattern.png() + ')';
-  target.style['background-repeat'] = 'no-repeat';
-  target.style['background-size'] = 'cover';
-}
-
-addTriangleTo(document.body);
-
 </script>
 
 

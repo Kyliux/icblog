@@ -1,141 +1,90 @@
+<!-- Gallery.svelte -->
 <script>
-  import { useConnect, useCanister } from "@connect2ic/svelte";
-  import { onMount } from 'svelte';
-  import { HttpAgent } from '@dfinity/agent';
-  import Masonry from './Masonry.svelte';
-  import { Link } from "svelte-navigator";
+  import { onMount, afterUpdate } from 'svelte';
+  import Packery from 'packery';
+  import { tick } from 'svelte';
+  import { initPackery, uploadFile, fetchMediaFiles, initActors, removeGridItem } from '../src/galleryUtils.js';
 
-  import { Ed25519KeyIdentity } from "@dfinity/identity";
-  import { getActor } from "./actor.js";
-  import { updateChecksum }  from "../src/utils.js";
 
-  let motoko_identity = Ed25519KeyIdentity.generate();
+  let container;
+  let packery;
+  initPackery(container);
 
-  // Import the necessary IDL files
-  import { idlFactory as fileStorageIdlFactory } from "../../.dfx/local/canisters/file_storage/file_storage.did.js";
-  import { idlFactory as fileScalingManagerIdlFactory } from "../../.dfx/local/canisters/file_scaling_manager/file_scaling_manager.did.js";
 
-  // Import the canister IDs
-  import canisterIds from "../../.dfx/local/canister_ids.json";
-
-  let test = "default";
-  let file_scaling_manager_actor;
-  let file_storage_actor;
-  let mediaFiles = [];
-  let checksum = 0;
-
+  let mediaFiles = []; 
   onMount(async () => {
-    // Create actors using the agent and IDL factories
-    file_scaling_manager_actor = await getActor(
-      canisterIds.file_scaling_manager.local,
-      fileScalingManagerIdlFactory,
-      motoko_identity
-    );
-    file_scaling_manager_actor.init();
+  try {
+    await initActors();
 
-    file_storage_actor = await getActor(
-      test= await file_scaling_manager_actor.get_file_storage_canister_id(),
-      fileStorageIdlFactory,
-      motoko_identity
-    );
-    console.log("test  ", test);
-    console.log("file_storage_actor  ", file_storage_actor);
-    if (file_storage_actor) {
-      // Fetch the media files from the file storage canister
-      const result = await file_storage_actor.assets_list();
-      if (result.ok) {
-        mediaFiles = result.ok;
-      } else {
-        console.error("Error fetching media files:", result.err);
-      }
+    const result = await fetchMediaFiles();
+    if (result.ok) {
+      mediaFiles = result.ok;
     } else {
-      console.error("Error creating file storage actor");
+      console.error("Error fetching media files:", result.err);
     }
-  });
-
-  async function uploadFile(file) {
-  if (file_storage_actor) {
-    // Convert the file to a Blob
-    const blob = new Blob([file], { type: file.type });
-
-    var batch_id = Math.random().toString(36).substring(2, 7);
-
-    const uploadChunk = async ({ chunk, order }) => {
-      console.error("return a chunk");
-      return file_storage_actor.create_chunk(batch_id, chunk, order);
-    };
-
-    const asset_reader = new FileReader();
-
-    asset_reader.onloadend = async () => {
-      const asset_unit8Array = new Uint8Array(asset_reader.result);
-      console.error("return a chunk", asset_unit8Array);
-      const promises = [];
-      const chunkSize = 2000000;
-      let checksum = 0;
-
-      for (let start = 0, index = 0; start < asset_unit8Array.length; start += chunkSize, index++) {
-        const chunk = asset_unit8Array.slice(start, start + chunkSize);
-
-        checksum = updateChecksum(chunk, checksum);
-
-        promises.push(uploadChunk({ chunk, order: index }));
-        console.error("return a chunk", asset_unit8Array);
-      }
-
-      const chunk_ids = await Promise.all(promises);
-
-      const asset_filename = file.name;
-      const asset_content_type = file.type;
-
-      const { ok: asset_id } = await file_storage_actor.commit_batch(
-        batch_id,
-        chunk_ids,
-        {
-          filename: asset_filename,
-          checksum: checksum,
-          content_encoding: { Identity: null },
-          content_type: asset_content_type,
-        }
-      );
-
-      const { ok: asset } = await file_storage_actor.get(asset_id);
-
-      // Perform further operations with asset or handle the upload completion
-    };
-
-    asset_reader.readAsArrayBuffer(file);
-    console.error("readAsArrayBuffer assetreader", asset_reader);
+  } catch (error) {
+    console.error("Error initializing actors:", error);
   }
+});
+ // afterUpdate(init);
+  
+
+  async function handleFileUpload(files) {
+  const filePromises = Array.from(files).map((file) => uploadFile(file));
+  await Promise.all(filePromises);
+  await tick();
+  fetchMediaFiles().then((result) => {
+    if (result.ok) {
+      Array.from(files).forEach((file) => {
+          console.log("This file was successfully uploaded:", file.name);
+        });
+      mediaFiles = result.ok;
+    } else {
+      console.error("Error fetching media files:", result.err);
+    }
+     // Call initPackery after updating mediaFiles
+     initPackery(container);
+  });
 }
-
-
 </script>
 
 <h1>Gallery</h1>
 
-<input type="file" on:change="{e => uploadFile(e.target.files[0])}" />
+<input type="file" multiple on:change="{e => handleFileUpload(e.target.files)}" />
 
-<div class="masonry-grid">
+<div bind:this={container} class="packery-grid">
   {#each mediaFiles as file (file.id)}
-    <div class="grid-item">
-      <img src="{file.url}" alt="{file.filename}" width="100%" />
+    <div class="grid-item" >
+        <img src="{file.url}" alt="{file.filename}" width="100%" on:contextmenu="{() => removeGridItem(file.url)}" />
+        <div class=name >
+        LOL
+        </div>
     </div>
   {/each}
 </div>
 
 <style>
-  /* Styles for the masonry grid */
-  .masonry-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    grid-gap: 16px;
-  }
+   .packery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-gap: 10px;
+}
 
-  .grid-item {
-    /* Style for each grid item */
-    background-color: #f1f1f1;
-    padding: 16px;
-  }
+.grid-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-item img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
+
+.grid-item:hover img {
+  filter: brightness(70%);
+}
+
+
 </style>
-

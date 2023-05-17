@@ -6,7 +6,7 @@
   import { Link } from "svelte-navigator";
 
   import { Ed25519KeyIdentity } from "@dfinity/identity";
-  import { getActor } from "./actor.js";
+  import { getActor } from "../src/actor.js";
   import { updateChecksum }  from "../src/utils.js";
 
   let motoko_identity = Ed25519KeyIdentity.generate();
@@ -61,16 +61,13 @@
     var batch_id = Math.random().toString(36).substring(2, 7);
 
     const uploadChunk = async ({ chunk, order }) => {
-      console.error("return a chunk");
-
       return file_storage_actor.create_chunk(batch_id, chunk, order);
     };
 
-    const asset_reader = new FileReader(file);
+    const asset_reader = new FileReader();
 
     asset_reader.onloadend = async () => {
       const asset_unit8Array = new Uint8Array(asset_reader.result);
-      console.error("return a chunk", asset_unit8Array);
       const promises = [];
       const chunkSize = 2000000;
       let checksum = 0;
@@ -78,40 +75,36 @@
       for (let start = 0, index = 0; start < asset_unit8Array.length; start += chunkSize, index++) {
         const chunk = asset_unit8Array.slice(start, start + chunkSize);
 
-       checksum = updateChecksum(chunk, checksum);
+        checksum = updateChecksum(chunk, checksum);
 
         promises.push(uploadChunk({ chunk, order: index }));
-        console.error("return a chunk", asset_unit8Array);
-
       }
 
       const chunk_ids = await Promise.all(promises);
 
-      // Perform further operations with chunk_ids or handle the upload completion
+      const asset_filename = file.name;
+      const asset_content_type = file.type;
+
+      const { ok: asset_id } = await file_storage_actor.commit_batch(
+        batch_id,
+        chunk_ids,
+        {
+          filename: asset_filename,
+          checksum: checksum,
+          content_encoding: { Identity: null },
+          content_type: asset_content_type,
+        }
+
+      );
+      console.error("asset_filename : ", asset_filename);
+
+      const { ok: asset } = await file_storage_actors.get(asset_id);
+
+      // Perform further operations with asset or handle the upload completion
     };
 
     asset_reader.readAsArrayBuffer(file);
     console.error("readAsArrayBuffer assetreader", asset_reader);
-
-  const asset_filename = file_storage_actor.asset.filename;
-  const asset_content_type = mime.getType(file_path);
-
-  const { ok: asset_id } = await file_storage_actors.motoko.commit_batch(
-    batch_id,
-    chunk_ids,
-    {
-      filename: asset_filename,
-      checksum: checksum,
-      content_encoding: { Identity: null },
-      content_type: asset_content_type,
-    }
-  );
-
-  const { ok: asset } = await file_storage_actors.motoko.get(asset_id);
-
-
-
-
   }
 }
 

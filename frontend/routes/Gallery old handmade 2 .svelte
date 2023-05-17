@@ -6,7 +6,7 @@
   import { Link } from "svelte-navigator";
 
   import { Ed25519KeyIdentity } from "@dfinity/identity";
-  import { getActor } from "./actor.js";
+  import { getActor } from "../src/actor.js";
 
 
   let motoko_identity = Ed25519KeyIdentity.generate();

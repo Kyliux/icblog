@@ -1,5 +1,7 @@
-- packery
-- refactorisation / simplification
+- packery : ok
+- refactorisation / simplification : en cours
+- image size management : en cours
+- delete image if owner : pas encore
 - multi level images (like a tree)
 - add a new image / delete an image / edit image name
 - add a new tag / delete a tag

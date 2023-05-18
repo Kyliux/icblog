@@ -4,6 +4,7 @@
   import Packery from 'packery';
   import { tick } from 'svelte';
   import { initPackery, uploadFile, fetchMediaFiles, initActors, removeGridItem } from '../src/galleryUtils.js';
+    import { init } from 'svelte/internal'
 
 
   let container;
@@ -27,23 +28,51 @@
   }
 });
   
+afterUpdate(() => {
+    initPackery(container); // Call initPackery after the component updates
+  });
 
-  async function handleFileUpload(files) {
-  const filePromises = Array.from(files).map((file) => uploadFile(file));
-  await Promise.all(filePromises);
+async function handleFileUpload(files) {
+  for (const file of files) {
+    try {
+      await uploadFile(file);
+      console.log("This file was successfully uploaded:", file.name);
+    } catch (error) {
+      console.error("Error uploading file:", file.name, error);
+    }
+  }
+
   await tick();
   fetchMediaFiles().then((result) => {
     if (result.ok) {
-      Array.from(files).forEach((file) => {
-          console.log("This file was successfully uploaded:", file.name);
-        });
       mediaFiles = result.ok;
     } else {
       console.error("Error fetching media files:", result.err);
     }
-     // Call initPackery after updating mediaFiles
+    initPackery(container);
+    // Call initPackery after updating mediaFiles
   });
 }
+
+
+function getImageStyles(file) {
+    const aspectRatio = file.width / file.height;
+    let width;
+    let height;
+
+    if (aspectRatio >= 1) {
+      // Landscape or square image
+      width = "200px";
+      height = "auto";
+    } else {
+      // Portrait image
+      width = "auto";
+      height = "200px";
+    }
+
+    return `width: ${width}; height: ${height};`;
+  }
+
 </script>
 
 <h1>Gallery</h1>
@@ -53,9 +82,9 @@
 <div bind:this={container} class="packery-grid">
   {#each mediaFiles as file (file.id)}
     <div class="grid-item" >
-        <img src="{file.url}" alt="{file.filename}" width="200px" on:contextmenu="{() => removeGridItem(file.url)}" />
+        <img src="{file.url}" alt="{file.filename}" style="{getImageStyles(file)}" on:contextmenu="{() => removeGridItem(file.url)}" />
         <div class=name >
-        LOL
+        
         </div>
     </div>
   {/each}
@@ -64,8 +93,8 @@
 <style>
    .packery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  grid-gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+  grid-gap: 1px;
 }
 
 .grid-item {

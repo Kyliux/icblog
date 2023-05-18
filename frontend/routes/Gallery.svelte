@@ -13,10 +13,23 @@
 
 
   let mediaFiles = []; 
+  let mediaStyles = [];
+
+  
+  async function updateMediaFiles() {
+  const result = await fetchMediaFiles();
+  if (result.ok) {
+    mediaFiles = result.ok;
+    mediaStyles = await Promise.all(mediaFiles.map(file => getImageStyles(file)));
+  } else {
+    console.error("Error fetching media files:", result.err);
+  }
+}
+
   onMount(async () => {
   try {
     await initActors();
-
+    await updateMediaFiles();
     const result = await fetchMediaFiles();
     if (result.ok) {
       mediaFiles = result.ok;
@@ -49,29 +62,49 @@ async function handleFileUpload(files) {
     } else {
       console.error("Error fetching media files:", result.err);
     }
-    initPackery(container);
-    // Call initPackery after updating mediaFiles
+  });
+  await updateMediaFiles();
+  initPackery(container);
+}
+
+
+
+
+async function getImageStyles(file) {
+  return new Promise((resolve, reject) => {
+    let img = new Image();
+    img.onload = function() {
+      let dimensions = { width: this.width, height: this.height };
+      let width, height;
+
+      const aspectRatio = dimensions.width / dimensions.height;
+
+      if (aspectRatio > 1) {
+        // Landscape image or square image
+        width = "400px";
+        height = "200px";
+      } else if (aspectRatio < 1) {
+        // Portrait image
+        width = "200px";
+        height = "400px";
+      } else {
+        // Square image
+        width = "200px";
+        height = "200px";
+      }
+
+      resolve(`width: ${width}; height: ${height};`);
+    };
+    img.onerror = function() {
+      reject("Failed to load image");
+    };
+    img.src = file.url;
   });
 }
 
 
-function getImageStyles(file) {
-    const aspectRatio = file.width / file.height;
-    let width;
-    let height;
 
-    if (aspectRatio >= 1) {
-      // Landscape or square image
-      width = "200px";
-      height = "auto";
-    } else {
-      // Portrait image
-      width = "auto";
-      height = "200px";
-    }
 
-    return `width: ${width}; height: ${height};`;
-  }
 
 </script>
 
@@ -80,9 +113,9 @@ function getImageStyles(file) {
 <input type="file" multiple on:change="{e => handleFileUpload(e.target.files)}" />
 
 <div bind:this={container} class="packery-grid">
-  {#each mediaFiles as file (file.id)}
+  {#each mediaFiles as file, i (file.id)}
     <div class="grid-item" >
-        <img src="{file.url}" alt="{file.filename}" style="{getImageStyles(file)}" on:contextmenu="{() => removeGridItem(file.url)}" />
+        <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" on:contextmenu="{() => removeGridItem(file.url, container)}" />
         <div class=name >
         
         </div>
@@ -91,27 +124,52 @@ function getImageStyles(file) {
 </div>
 
 <style>
-   .packery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
-  grid-gap: 1px;
-}
+  .input-wrapper {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 10px;
+  }
 
-.grid-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .hidden {
+    display: none;
+  }
 
-.grid-item img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: cover;
-}
+  .file-upload-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: lightgray;
+    cursor: pointer;
+    border: 1px solid darkgray;
+  }
 
-.grid-item:hover img {
-  filter: brightness(70%);
-}
+  .plus-symbol {
+    font-size: 3rem;
+    color: darkgray;
+  }
 
+  .packery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+    grid-gap: 1px;
+  }
+
+  .grid-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .grid-item img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+  }
+
+  .grid-item:hover img {
+    filter: brightness(70%);
+  }
 
 </style>

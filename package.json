@@ -16,6 +16,7 @@
     "@dfinity/identity": "^0.15.0",
     "@dfinity/principal": "^0.15.0",
     "crc-32": "^1.2.2",
+    "imagesloaded": "^5.0.0",
     "lodash": "^4.17.21",
     "marked": "^4.0.18",
     "masonry": "^0.0.2",

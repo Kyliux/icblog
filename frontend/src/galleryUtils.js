@@ -3,6 +3,8 @@ import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { getActor } from "./actor";
 import { updateChecksum } from "./utils";
 import Packery from 'packery';
+import imagesLoaded from 'imagesloaded';
+
 
 import {
   idlFactory as fileStorageIdlFactory} from "../../.dfx/local/canisters/file_storage/file_storage.did.js";
@@ -109,6 +111,10 @@ export function initPackery(container) {
       gutter: 1
     });
 
+    imagesLoaded(container).on('progress', function() {
+      packery.layout();
+    });
+
     packery.getItemElements().forEach((item) => {
       item.querySelector('img').addEventListener('load', () => {
         packery.layout();
@@ -123,28 +129,56 @@ export function initPackery(container) {
 
 
 
-export async function removeGridItem(url) {
+export async function removeGridItem(url, container) {
   try {
     console.log("Removing grid item with URL:", url);
-  const assetId = getAssetId(url);
+    const assetId = getAssetId(url);
 
-  console.log("Removing grid item with Asset ID:", assetId);
+    console.log("Removing grid item with Asset ID:", assetId);
 
-  const delete_result = await fileStorageActor.delete_asset(assetId);
-  console.log("Removing grid item with delete_result:", delete_result);
+    const delete_result = await fileStorageActor.delete_asset(assetId);
+    console.log("Removing grid item with delete_result:", delete_result);
 
-  const asset_list = await fileStorageActor.assets_list();
-  let deleted_asset = null;
-  for (let i = 0; i < asset_list.length; i++) {
-    if (asset_list[i].url === url) {
-      deleted_asset = asset_list[i];
-      break;
+    if (delete_result.ok) {
+      const result = await fetchMediaFiles();
+      if (result.ok) {
+        mediaFiles = result.ok;
+
+        // Remove the grid item from the packery instance
+        const gridItem = Array.from(container.querySelectorAll('.grid-item')).find((item) => {
+          const img = item.querySelector('img');
+          return img && img.src === url;
+        });
+        if (gridItem) {
+          container.removeChild(gridItem);
+        }
+
+        // Trigger the layout update
+        const packery = new Packery(container, {
+          itemSelector: '.grid-item',
+          gutter: 1
+        });
+        packery.layout();
+      } else {
+        console.error("Error fetching media files:", result.err);
+      }
+    } else {
+      console.error("Error deleting grid item:", delete_result.err);
     }
+
+    const asset_list = await fileStorageActor.assets_list();
+    let deleted_asset = null;
+    for (let i = 0; i < asset_list.length; i++) {
+      if (asset_list[i].url === url) {
+        deleted_asset = asset_list[i];
+        break;
+      }
+    }
+    console.log("Check if deleted_asset is still here:", deleted_asset);
+  } catch (error) {
+    console.error("Error removing grid item:", error);
   }
-  console.log("Check if deleted_asset is still here:", deleted_asset);
-} catch (error) {
-  console.error("Error removing grid item:", error);
-}}
+}
 
 function getAssetId(url) {
   const parts = url.split('/');

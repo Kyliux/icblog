@@ -1,51 +1,51 @@
-<!-- Gallery.svelte -->
 <script>
   import { onMount, afterUpdate } from 'svelte';
-  import Packery from 'packery';
   import { tick } from 'svelte';
-  import { initPackery, uploadFile, fetchMediaFiles, initActors, removeGridItem } from '../src/galleryUtils.js';
-    import { init } from 'svelte/internal'
+  import { initPackery, uploadFile, updateMediaFiles, fetchMediaFiles, getImageStyles, initActors, removeGridItem } from '../src/galleryFunctions.js';
+  import imagesLoaded from 'imagesloaded';
+  import Packery from 'packery';
 
 
-  let container;
   let packery;
-  initPackery(container);
-
-
+  let container;
   let mediaFiles = []; 
   let mediaStyles = [];
 
-  
-  async function updateMediaFiles() {
-  const result = await fetchMediaFiles();
-  if (result.ok) {
-    mediaFiles = result.ok;
-    mediaStyles = await Promise.all(mediaFiles.map(file => getImageStyles(file)));
-  } else {
-    console.error("Error fetching media files:", result.err);
-  }
-}
-
   onMount(async () => {
+
   try {
     await initActors();
-    await updateMediaFiles();
     const result = await fetchMediaFiles();
     if (result.ok) {
       mediaFiles = result.ok;
+      mediaStyles = await updateMediaFiles();
+      setTimeout(() => {
+        packery = new Packery(container, { itemSelector: '.grid-item' });
+
+packery.getItemElements().forEach(gridItem => {
+  imagesLoaded(gridItem, function() {
+    packery.layout();
+  });
+});
+   }, 1); // Delay of 1 second
+
     } else {
       console.error("Error fetching media files:", result.err);
     }
+    
   } catch (error) {
     console.error("Error initializing actors:", error);
   }
 });
-  
-afterUpdate(() => {
-    initPackery(container); // Call initPackery after the component updates
-  });
 
-async function handleFileUpload(files) {
+  afterUpdate(() => {
+    if(packery){
+        packery.reloadItems(); // Reload all item elements in the packery instance
+        packery.layout(); // Layout all item elements again
+    }
+    });
+
+    async function handleFileUpload(files) {
   for (const file of files) {
     try {
       await uploadFile(file);
@@ -56,57 +56,51 @@ async function handleFileUpload(files) {
   }
 
   await tick();
-  fetchMediaFiles().then((result) => {
+  fetchMediaFiles().then(async (result) => {
     if (result.ok) {
       mediaFiles = result.ok;
+      mediaStyles = await updateMediaFiles();
+
+      await tick(); // Wait for Svelte to apply updates
+
+      // Check if Packery has been initialized
+      if (packery) {
+        // If it has, reload items and layout
+        packery.reloadItems();
+        packery.layout();
+      } else {
+        // Otherwise, initialize Packery
+        packery = new Packery(container, { itemSelector: '.grid-item' });
+      }
+
+      packery.getItemElements().forEach(gridItem => {
+        imagesLoaded(gridItem, function() {
+          console.log('Image loaded, laying out grid again...');
+          packery.layout();
+        });
+      });
+
+      console.log('Packery layout complete');
+
+      // Force layout update after slight delay
+      setTimeout(() => {
+        console.log('Forcing Packery layout update...');
+        packery.layout();
+      }, 500);
+
     } else {
       console.error("Error fetching media files:", result.err);
     }
   });
-  await updateMediaFiles();
-  initPackery(container);
 }
 
 
 
 
-async function getImageStyles(file) {
-  return new Promise((resolve, reject) => {
-    let img = new Image();
-    img.onload = function() {
-      let dimensions = { width: this.width, height: this.height };
-      let width, height;
-
-      const aspectRatio = dimensions.width / dimensions.height;
-
-      if (aspectRatio > 1) {
-        // Landscape image or square image
-        width = "400px";
-        height = "200px";
-      } else if (aspectRatio < 1) {
-        // Portrait image
-        width = "200px";
-        height = "400px";
-      } else {
-        // Square image
-        width = "200px";
-        height = "200px";
-      }
-
-      resolve(`width: ${width}; height: ${height};`);
-    };
-    img.onerror = function() {
-      reject("Failed to load image");
-    };
-    img.src = file.url;
-  });
-}
-
-
-
-
-
+  // Whenever mediaFiles is updated, update mediaStyles as well
+  $: mediaStyles = mediaFiles.map(file => getImageStyles(file));
 </script>
+
 
 <h1>Gallery</h1>
 
@@ -114,62 +108,35 @@ async function getImageStyles(file) {
 
 <div bind:this={container} class="packery-grid">
   {#each mediaFiles as file, i (file.id)}
-    <div class="grid-item" >
+    <div class="grid-item">
         <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" on:contextmenu="{() => removeGridItem(file.url, container)}" />
-        <div class=name >
-        
-        </div>
+        <div class="name"></div>
     </div>
   {/each}
 </div>
 
 <style>
-  .input-wrapper {
-    width: 200px;
-    height: 200px;
-    margin-bottom: 10px;
-  }
-
-  .hidden {
-    display: none;
-  }
-
-  .file-upload-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    background-color: lightgray;
-    cursor: pointer;
-    border: 1px solid darkgray;
-  }
-
-  .plus-symbol {
-    font-size: 3rem;
-    color: darkgray;
-  }
-
   .packery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
-    grid-gap: 1px;
+    position:relative;
+  width:100%;
+  margin:0 auto;
+  background-color:#fdd;
   }
 
   .grid-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin: 0px;
   }
 
   .grid-item img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: cover;
+   
+    transition: filter 0.3s;
   }
 
   .grid-item:hover img {
     filter: brightness(70%);
   }
 
+  .name {
+  
+  }
 </style>

@@ -8,7 +8,8 @@
   import { defaultProviders } from "@connect2ic/core/providers"
   import { ConnectButton, ConnectDialog, Connect2ICProvider } from "@connect2ic/svelte"
   import "@connect2ic/core/style.css"
-  
+
+
   /*
    * Import canister definitions like this:
   */
@@ -74,14 +75,14 @@ addTriangleTo(document.body);
                   IC Blogsite
               </a>
               <Link class="nav-link" to="/">Home</Link>
-              <Link class="nav-link" to="gallery">Gallery</Link>
+              <Link class="nav-link" to="/gallery/index">Gallery</Link>
               <Link class="nav-link" to="about">About</Link>
           </nav>
       </header>
       <div class="content">
           <Route path="/" component={Home} />
           <Route path="about" component={About} />
-          <Route path="gallery" component={Gallery} />
+          <Route path="/gallery/:path" component={Gallery} />
           <Route path="create" component={Create} />
           <Route path="post/:id" component="{Detail}" /> <!-- Dynamic routes for post detail, update and delete-->
           <Route path="update/:id" component="{Update}" /> 

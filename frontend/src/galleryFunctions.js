@@ -110,6 +110,10 @@ export function uploadFile(file) {
 
 
 export async function removeGridItem(url, container) {
+      const confirmation = confirm("Are you sure you want to delete this image?");
+    if (!confirmation) {
+        return;  // The user clicked 'Cancel', so we exit the function.
+    }
   try {
     console.log("Removing grid item with URL:", url);
     const assetId = getAssetId(url);

@@ -1,4 +1,4 @@
-// galleryUtils.js
+// galleryFunctions.js
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { getActor } from "./actor";
 import { updateChecksum } from "./utils";
@@ -20,6 +20,7 @@ let fileStorageActor;
 let test="";
 let mediaFiles = [];
 let packery;
+var result="";
 
 export async function initActors() {
   fileScalingManagerActor = await getActor(
@@ -41,7 +42,11 @@ export async function initActors() {
 }
 
 export async function fetchMediaFiles() {
-  const result = await fileStorageActor.assets_list();
+  try {
+    result = await fileStorageActor.assets_list();
+} catch (error) {
+  console.error("Error in fetchMediaFiles:", error);
+}
   if (result.ok) {
     mediaFiles = result.ok; // Reassign the mediaFiles array
     return { ok: result.ok };

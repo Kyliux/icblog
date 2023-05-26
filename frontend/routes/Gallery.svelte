@@ -1,5 +1,5 @@
 <script>
-  import { onMount, afterUpdate } from 'svelte';
+  import { onMount, afterUpdate, onDestroy } from 'svelte';
   import { tick } from 'svelte';
   import { initPackery, uploadFile, updateMediaFiles, fetchMediaFiles, getImageStyles, initActors, removeGridItem } from '../src/galleryFunctions.js';
   import imagesLoaded from 'imagesloaded';
@@ -13,92 +13,94 @@
   let mediaStyles = [];
   let loading = true;
 
+  function handleResize() {
+    if (packery) {
+      packery.layout();
+    }
+  }
+
   onMount(async () => {
+    window.addEventListener('resize', handleResize);
 
-  try {
-    await initActors();
-    const result = await fetchMediaFiles();
-    if (result.ok) {
-      mediaFiles = result.ok;
-      mediaStyles = await updateMediaFiles();
-      setTimeout(() => {
-        packery = new Packery(container, { itemSelector: '.grid-item' });
-
-packery.getItemElements().forEach(gridItem => {
-  imagesLoaded(gridItem, function() {
-    packery.layout();
-  });
-});
-   }, 1); // Delay of 1 second
-
-    } else {
-      console.error("Error fetching media files:", result.err);
-    }
-    
-  } catch (error) {
-    console.error("Error initializing actors:", error);
-  }
-  loading = false;
-});
-
-  afterUpdate(() => {
-    if(packery){
-        packery.reloadItems(); // Reload all item elements in the packery instance
-        packery.layout(); // Layout all item elements again
-    }
-    });
-
-    async function handleFileUpload(files) {
-  for (const file of files) {
     try {
-      await uploadFile(file);
-      console.log("This file was successfully uploaded:", file.name);
-    } catch (error) {
-      console.error("Error uploading file:", file.name, error);
-    }
-  }
+      await initActors();
+      const result = await fetchMediaFiles();
+      if (result.ok) {
+        mediaFiles = result.ok;
+        mediaStyles = await updateMediaFiles();
 
-  await tick();
-  fetchMediaFiles().then(async (result) => {
-    if (result.ok) {
-      mediaFiles = result.ok;
-      mediaStyles = await updateMediaFiles();
+        packery = new Packery(container, { itemSelector: '.grid-item',gutter: 1 });
 
-      await tick(); // Wait for Svelte to apply updates
-
-      // Check if Packery has been initialized
-      if (packery) {
-        // If it has, reload items and layout
-        packery.reloadItems();
-        packery.layout();
-      } else {
-        // Otherwise, initialize Packery
-        packery = new Packery(container, { itemSelector: '.grid-item' });
-      }
-
-      packery.getItemElements().forEach(gridItem => {
-        imagesLoaded(gridItem, function() {
-          console.log('Image loaded, laying out grid again...');
-          packery.layout();
+        packery.getItemElements().forEach(gridItem => {
+          imagesLoaded(gridItem, function() {
+            packery.layout();
+          });
         });
-      });
 
-      console.log('Packery layout complete');
-
-      // Force layout update after slight delay
-      setTimeout(() => {
-        console.log('Forcing Packery layout update...');
-        packery.layout();
-      }, 500);
-
-    } else {
-      console.error("Error fetching media files:", result.err);
+      } else {
+        console.error("Error fetching media files:", result.err);
+      }
+      
+    } catch (error) {
+      console.error("Error initializing actors:", error);
     }
+    loading = false;
   });
-}
 
+  onDestroy(() => {
+    window.removeEventListener('resize', handleResize);
+  });
 
+  async function handleFileUpload(files) {
+    for (const file of files) {
+      try {
+        await uploadFile(file);
+        console.log("This file was successfully uploaded:", file.name);
+      } catch (error) {
+        console.error("Error uploading file:", file.name, error);
+      }
+    }
 
+    await tick();
+    fetchMediaFiles().then(async (result) => {
+      if (result.ok) {
+        mediaFiles = result.ok;
+        mediaStyles = await updateMediaFiles();
+
+        await tick(); // Wait for Svelte to apply updates
+
+        // Check if Packery has been initialized
+        if (packery) {
+          // If it has, reload items and layout
+          packery.reloadItems();
+          packery.layout();
+
+        } else {
+          // Otherwise, initialize Packery
+          packery = new Packery(container, { itemSelector: '.grid-item' });
+          
+        }
+
+        packery.getItemElements().forEach(gridItem => {
+          imagesLoaded(gridItem, function() {
+            console.log('Image loaded, laying out grid again...');
+            packery.layout();
+          });
+        });
+
+        console.log('Packery layout complete');
+
+        // Force layout update after slight delay
+        setTimeout(() => {
+          console.log('Forcing Packery layout update...');
+          packery.layout();
+        }, 500);
+
+      } else {
+        console.error("Error fetching media files:", result.err);
+      }
+    });
+  }
 
   // Whenever mediaFiles is updated, update mediaStyles as well
   $: mediaStyles = mediaFiles.map(file => getImageStyles(file));
@@ -125,21 +127,27 @@ packery.getItemElements().forEach(gridItem => {
 </div>
 <Loader loading={loading} />
 <style>
+
+  
   .packery-grid {
-    position: relative;
-    max-width: 90vw; /* You can change this to suit your design */
-    margin: 0 auto; /* This centers the grid horizontally */
-    display: block; /* You may not need this line if your grid is a block-level element by default */
+    position: absolute;
+    overflow: hidden;
+    margin-left : 80px;
    
   }
+  
 
   .grid-item {
-    margin: 0px;
-    position: relative;
+    border: none;  
+  padding: 0; 
+  box-sizing: border-box;
+  overflow: hidden;
+  margin-bottom: -3px;
+
   }
 
   .grid-item img {
-   
+    width:100%;
     transition: filter 0.3s;
   }
 
@@ -158,6 +166,8 @@ packery.getItemElements().forEach(gridItem => {
     height: 50%;
     transition: filter 0.3s;
     pointer-events: auto;
+    box-sizing: border-box;
+
   }
 
   .grid-item .zone-top-left {

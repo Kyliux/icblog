@@ -26,11 +26,44 @@ async function handleFileUpload(files) {
       console.error("Error uploading file:", file.name, error);
     }
   }
-  mediaFiles = [...mediaFiles, ...newFiles];
-  mediaStyles = await updateMediaFiles();
-  packery.layout(); // refresh Packery layout
-}
+  await tick();
+  fetchMediaFiles().then(async (result) => {
+    if (result.ok) {
+      mediaFiles = result.ok;
+      mediaStyles = await updateMediaFiles();
 
+      await tick(); // Wait for Svelte to apply updates
+
+      // Check if Packery has been initialized
+      if (packery) {
+        // If it has, reload items and layout
+        packery.reloadItems();
+        packery.layout();
+
+        packery.getItemElements().forEach(gridItem => {
+          imagesLoaded(gridItem, function() {
+            console.log('Image loaded, laying out grid again...');
+            packery.layout();
+          });
+        });
+
+        console.log('Packery layout complete');
+
+        // Force layout update after slight delay
+        setTimeout(() => {
+          console.log('Forcing Packery layout update...');
+          packery.layout();
+        }, 500);
+
+      } else {
+        // Otherwise, initialize Packery
+        packery = new Packery(container, { itemSelector: '.grid-item' });
+      }
+    } else {
+      console.error("Error fetching media files:", result.err);
+    }
+  });
+} 
 
 
 

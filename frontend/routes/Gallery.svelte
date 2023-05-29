@@ -4,7 +4,9 @@
   import { initActors, fetchMediaFiles, uploadFile, removeGridItem, updateMediaFiles, getImageStyles, initPackery } from '../src/galleryFunctions.js';
   import Loader from '../components/Loader.svelte';
   import bin from '../assets/bin.svg';
+  import { tick } from 'svelte';
 
+  
   let packery;
   let container;
   let mediaFiles = [];
@@ -12,11 +14,16 @@
   let loading = true;
   
   const params = useParams();
-  export let currentpath = params.id || '';
+  export let id = params.id || '';
 
+  export let id2 = params.id2 || '';
 
-  console.error("let currentpath = ", currentpath);
+  console.error("let id = ", id);
+  console.error("let id2 = ", id2);
 
+  let currentpath = "/" + id + "/" + id2;
+
+  console.error("lcurrentpath = ", currentpath);
 
   onMount(async () => {
     window.addEventListener('resize', handleResize);

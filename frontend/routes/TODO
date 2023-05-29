@@ -1,11 +1,22 @@
+ROADMAP :
+
 - packery : ok
-- refactorisation / simplification : en cours
-- image size management : en cours
-- delete image if owner : pas encore
-- multi level images (like a tree)
-- add a new image / delete an image / edit image name
+- refactorisation / simplification : in progress
+- multi level images (like a tree) : in progress
+- add a new image / delete an image : done
+- edit image name or path
 - add a new tag / delete a tag
 - add a new category / delete a category
 - user management
 - image or media management memory size
+- image size view management 
+- delete image if owner 
+
+
+TOSOLVE :
+- add packery grid need a refresh to see image added
+- remove a picture send them to a temporary trash gallery instead of deleting them
+- add default gallery/
+- add "go back" in a more principal branch of the gallery
+
 

@@ -83,7 +83,8 @@ addTriangleTo(document.body);
       <div class="content">
           <Route path="/" component={Home} />
           <Route path="about" component={About} />
-          <Route path="/gallery/:currentpath" component={Gallery} />
+          <Route path="/gallery/:id" component={Gallery} />
+          <Route path="/gallery/:id/:id2" component={Gallery} />
           <Route path="create" component={Create} />
           <Route path="post/:id" component="{Detail}" /> <!-- Dynamic routes for post detail, update and delete-->
           <Route path="update/:id" component="{Update}" /> 

@@ -1,12 +1,25 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { useParams } from 'svelte-navigator';
-  import { initActors, fetchMediaFiles, uploadFile, removeGridItem, updateMediaFiles, getImageStyles, initPackery } from '../src/galleryFunctions.js';
+  import { useParams, navigate } from 'svelte-navigator';
+  import Packery from 'packery';
+  import { useConnect, useCanister } from "@connect2ic/svelte"
+
+  import { initActors, hasChildren, fetchMediaFiles, uploadFile, removeGridItem, updateMediaFiles, getImageStyles, initPackery } from '../src/galleryFunctions.js';
   import Loader from '../components/Loader.svelte';
   import bin from '../assets/bin.svg';
   import { tick } from 'svelte';
+  import imagesLoaded from 'imagesloaded';
 
-  
+  const { isConnected, principal } = useConnect({
+        onConnect: () => {
+            console.log("Connected!")
+        },
+        onDisconnect: () => {
+            console.log("Disconnected!")
+        }
+    })
+
+
   let packery;
   let container;
   let mediaFiles = [];
@@ -14,14 +27,23 @@
   let loading = true;
   
   const params = useParams();
-  export let id = params.id || '';
+  export let id1 = params.id1 || '';
 
   export let id2 = params.id2 || '';
 
-  console.error("let id = ", id);
+  export let id3 = params.id3 || '';
+
+  console.error("let id = ", id1);
   console.error("let id2 = ", id2);
 
-  let currentpath = "/" + id + "/" + id2;
+  console.error("let id2 = ", id3);
+
+  let currentpath = "";
+
+if(id3) currentpath = "/" + id1 + "/" + id2 + "/" + id3;
+else if (id2) currentpath = "/" + id1 + "/" + id2;
+else if (id1) currentpath = "/" + id1;
+
 
   console.error("lcurrentpath = ", currentpath);
 
@@ -108,37 +130,62 @@
   }
 }
 
+async function handleGridItemClick(file) {
+ 
+    // Construct the subgallery URL based on the filename without the extension
+    const subgalleryUrl = `/gallery${currentpath}/${getFileNameWithoutExtension(file.filename)}`;
 
-async function handleGridItemClick(url) {
-  await removeGridItem(url, container, currentpath);
-  await fetchData();
-  if (packery) {
-    // Reload items and layout
-    packery.reloadItems();
-    packery.layout();
-  } else {
-    // Initialize Packery
-    packery = new Packery(container, { itemSelector: '.grid-item' });
+    // Navigate to the subgallery URL
+    navigate(subgalleryUrl);
 
-    // Wait for Packery to initialize before reloading items and layout
-    packery.on('layoutComplete', () => {
-      packery.reloadItems();
-      packery.layout();
-    });
-  }
 }
 
-  $: {
-    if (mediaFiles.length > 0) {
-      Promise.all(mediaFiles.map(file => getImageStyles(file)))
-        .then(styles => {
-          mediaStyles = styles;
-        })
-        .catch(error => {
-          console.error("Error getting image styles:", error);
-        });
-    }
+
+function getFileNameWithoutExtension(filename) {
+  const index = filename.lastIndexOf(".");
+  return index !== -1 ? filename.substring(0, index) : filename;
+}
+
+function popCurrentPath(currentPath) {
+  const pathParts =  currentPath.split('/');
+  if (pathParts.length <= 1) {
+    return '';
   }
+  // Remove the last element from the pathParts array
+  pathParts.pop();
+  // Join the remaining parts back into a string
+  const newPath = pathParts.join('/');
+  return "/gallery"+newPath;
+}
+
+let packeryInitialized = false;
+
+$: {
+  
+    Promise.all(mediaFiles.map(file => getImageStyles(file)))
+      .then(styles => {
+        mediaStyles = styles;
+      })
+      .catch(error => {
+        console.error("Error getting image styles:", error);
+      });
+
+    setTimeout(() => {
+      if (container) {
+        packery = new Packery(container, {
+          itemSelector: '.grid-item',
+          gutter: 3
+        });
+
+        imagesLoaded(container, () => {
+          packery.layout();
+        });
+
+        packeryInitialized = true;
+      }
+    }, 800);
+  
+}
 
   // Filter the mediaFiles based on the currentpath
   $: filteredMediaFiles = mediaFiles.filter(file => file.path === currentpath);
@@ -146,18 +193,24 @@ async function handleGridItemClick(url) {
 
 <h1>Gallery</h1>
 
+{#if $isConnected}
 <input type="file" multiple on:change="{e => handleFileUpload(e.target.files)}" />
 
 <div bind:this={container} class="packery-grid">
+  <div class="grid-item">
+    <img src="/frontend/assets/return.svg" on:contextmenu on:click={navigate(popCurrentPath(currentpath))} alt="none" style="width: 200px; height: 200px;" />
+  </div>
   {#each filteredMediaFiles as file, i (file.id)}
-    <div class="grid-item" on:click="{() => handleGridItemClick(file.url)}">
+    <div class="grid-item">
       <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
-      <div class="name"></div>
-      <div class="zone zone-top-left"></div>
-      <div class="zone zone-top-right" on:contextmenu>
-        <img src={bin} alt="trash logo" class="trash-icon" />
+      <div class="name" class:editing="{file.editing}">
+          <span on:dblclick={() => startEditing(file)}>{getFileNameWithoutExtension(file.filename)}</span>
       </div>
-      <div class="zone zone-bottom-left"></div>
+      <div class="zone zone-top-left" on:contextmenu on:click={() => handleGridItemClick(file)} ></div>
+        <div class="zone zone-top-right" on:contextmenu on:click={() => removeGridItem(file.url, container, currentpath)}>
+          <img src={bin} alt="trash logo" class="trash-icon" />
+        </div>
+      <div class="zone zone-bottom-left">{ hasChildren(currentpath)}</div>
       <div class="zone zone-bottom-right"></div>
     </div>
   {/each}
@@ -165,6 +218,25 @@ async function handleGridItemClick(url) {
 
 <Loader loading={loading} />
 
+{:else}
+
+<div bind:this={container} class="packery-grid">
+  <div class="grid-item">
+    <img src="/frontend/assets/return.svg" on:contextmenu on:click={navigate(popCurrentPath(currentpath))} alt="none" style="width: 200px; height: 200px;" />
+  </div>
+  {#each filteredMediaFiles as file, i (file.id)}
+    <div class="grid-item" on:contextmenu on:click={() => handleGridItemClick(file)}>
+      <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
+      <div class="name">
+          <span>{getFileNameWithoutExtension(file.filename)}</span>
+      </div>
+    </div>
+  {/each}
+</div>
+
+<Loader loading={loading} />
+
+{/if}
 <style>
   .packery-grid {
     position: absolute;
@@ -177,8 +249,7 @@ async function handleGridItemClick(url) {
     padding: 0;
     box-sizing: border-box;
     overflow: hidden;
-    margin-bottom: -3px;
-    padding-top: -3px;
+
   }
 
   .grid-item img {
@@ -190,7 +261,22 @@ async function handleGridItemClick(url) {
     filter: brightness(70%);
   }
 
-  .name {}
+  .name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 12px;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.name.editing {
+  opacity: 0;
+}
 
   .grid-item .zone {
     position: absolute;
@@ -212,18 +298,18 @@ async function handleGridItemClick(url) {
   }
 
   .trash-icon {
-    position: center;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
+  position: absolute;
+  top: 30%;
+  right: 0%;
+  width: 30px;
+  height: 30px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
 
-  .zone-top-right:hover .trash-icon {
-    opacity: 1;
-    width: 30px;
-  }
+.zone-top-right:hover .trash-icon {
+  opacity: 1;
+}
 
   .grid-item .zone-bottom-left {
     bottom: 0;

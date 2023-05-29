@@ -53,7 +53,20 @@ export async function fetchMediaFiles(currentpath) {
   }
 }
 
-export function uploadFile(file, path) {
+export async function hasChildren(path) {
+  let lol = false;
+  try {
+    lol = await fileStorageActor.haschildrenn(path);
+    console.error("has Children :", lol);
+
+    return lol;
+  } catch (error) {
+    console.error("hasChildren", error);
+    return { err: error };
+  }
+}
+
+ export function uploadFile(file, path) {
   return new Promise((resolve, reject) => {
     const blob = new Blob([file], { type: file.type });
     const batch_id = Math.random().toString(36).substring(2, 7);
@@ -239,3 +252,4 @@ export async function initPackery(container) {
     console.error("Error initializing Packery:", error);
   }
 }
+

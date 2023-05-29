@@ -1,21 +1,21 @@
 # IC BLOG sample app
-This project was created as a sample app for the Internet Computer so new developers in the ecosystem have some working examples to learn from.
 
-It is a simple blog site that allows authenticated users to create, read, update and delte blog posts.
 
-You can try running version of this project on this link: [https://gaqra-oqaaa-aaaah-qc4qa-cai.ic0.app](https://gaqra-oqaaa-aaaah-qc4qa-cai.ic0.app)
+It is the icblog from @lukas_icp with some modification. This is very bad factorized and is the results of a few weeks of try and error after years of not touching it. So svelte and motoko arent in my skillset yet. If you are looking for clean code, well, you can help improving this one ;D
+
+I am adding a Gallery section having the following characteristic :
+- packery gallery
+- Dynamic upload and delete, only possible when you are connected
+
 
 ### Backend
-The project consist of a backend written in Motoko programming language, that has been designed specifically for writing smart contracts on the Internet Computer Protocol. You can find backend code in the canisters/blog/main.mo file.
 
-Backend defines a Post type, HashMap as a database and methods for CRUD interace. There are also functions for filtering only published posts and sorting posts in the right order.
+Image a stored on the ICP chain
 
-### Frontend
- Front-end is written in the Svelte framework. There are Routes for Create, Read, Update, Delete, List posts. You can find it in the frontend/routes directory.
+### Requirements
 
-It should give a quick start to anyone thinking about starting it's own blog site on the Internet Computer or just want to learn how to create a simple dapp.
+This gallery is optimised with pictures having size assembled from block of 200px.
 
-I use Svelte starter app created by @miamaruq, he also created [starter apps for React, Vue or TS](https://github.com/MioQuispe/create-ic-app). If you want to use different toolkit, you can follow his repository. This starter app also utilizes the [Connect2IC toolkit](https://github.com/Connect2IC/connect2ic) that simplifies the process of wallet connection for different wallet providers.
 
 ## Local deployment 
 

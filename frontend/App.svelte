@@ -76,15 +76,16 @@ addTriangleTo(document.body);
                   IC Blogsite
               </a>
               <Link class="nav-link" to="/">Home</Link>
-              <Link class="nav-link" to="/gallery/">Gallery</Link>
+              <Link class="nav-link" to="/gallery/index">Gallery</Link>
               <Link class="nav-link" to="about">About</Link>
           </nav>
       </header>
       <div class="content">
           <Route path="/" component={Home} />
           <Route path="about" component={About} />
-          <Route path="/gallery/:id" component={Gallery} />
-          <Route path="/gallery/:id/:id2" component={Gallery} />
+          <Route path="/gallery/:id1" component={Gallery} />
+          <Route path="/gallery/:id1/:id2" component={Gallery} />
+          <Route path="/gallery/:id1/:id2/:id3" component={Gallery} />
           <Route path="create" component={Create} />
           <Route path="post/:id" component="{Detail}" /> <!-- Dynamic routes for post detail, update and delete-->
           <Route path="update/:id" component="{Update}" /> 

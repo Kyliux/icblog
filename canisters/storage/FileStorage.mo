@@ -204,6 +204,17 @@ public query func filter_assets_list(path2 : Text) : async Result.Result<[Asset]
 
     return #ok(Buffer.toArray(assets_list));
 };
+
+public query func haschildrenn(path2 : Text) : async Bool {
+    for (asset in Map.vals(assets)) {
+        if (asset.path == path2) {
+            return true;
+        };
+    };
+
+    return false;
+};
+
 	public query func get(id : Asset_ID) : async Result.Result<Asset, Text> {
 		switch (Map.get(assets, thash, id)) {
 			case (?asset) {

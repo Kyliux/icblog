@@ -76,7 +76,7 @@ actor class FileStorage() = this {
 		return chunk_id_count;
 	};
 
-	public shared ({ caller }) func commit_batch(batch_id : Text, chunk_ids : [Chunk_ID], asset_properties : AssetProperties) : async Result.Result<Asset_ID, Text> {
+	public shared ({ caller }) func commit_batch(batch_id : Text, chunk_ids : [Chunk_ID], asset_properties : AssetProperties, path : Text,) : async Result.Result<Asset_ID, Text> {
 		let ASSET_ID = Utils.generate_uuid();
 		let CANISTER_ID = Principal.toText(Principal.fromActor(this));
 
@@ -130,6 +130,7 @@ actor class FileStorage() = this {
 				is_prod = IS_PROD;
 			});
 			owner = Principal.toText(caller);
+			path = path;
 		};
 
 		ignore Map.put(assets, thash, ASSET_ID, asset);
@@ -188,6 +189,21 @@ actor class FileStorage() = this {
 		return #ok(Buffer.toArray(assets_list));
 	};
 
+public query func filter_assets_list(path2 : Text) : async Result.Result<[Asset], Text> {
+    var assets_list = Buffer.Buffer<Asset>(0);
+
+    for (asset in Map.vals(assets)) {
+        if (asset.path == path2) {
+            let asset_without_content : Asset = {
+                asset with content = null;
+            };
+
+            assets_list.add(asset_without_content);
+        };
+    };
+
+    return #ok(Buffer.toArray(assets_list));
+};
 	public query func get(id : Asset_ID) : async Result.Result<Asset, Text> {
 		switch (Map.get(assets, thash, id)) {
 			case (?asset) {
@@ -341,4 +357,22 @@ actor class FileStorage() = this {
 
 		assets_stable_storage := [];
 	};
+
+	// ------------------------- Additional Function -------------------------
+public shared func edit_asset_path(id : Asset_ID, new_path : Text) : async Result.Result<Text, Text> {
+    switch (Map.get(assets, thash, id)) {
+        case (?asset) {
+            let updated_asset : Asset = {
+                asset with path = new_path;
+            };
+
+            ignore Map.put(assets, thash, id, updated_asset);
+
+            return #ok("Asset path updated successfully.");
+        };
+        case (_) {
+            return #err("Asset not found.");
+        };
+    };
+};
 };

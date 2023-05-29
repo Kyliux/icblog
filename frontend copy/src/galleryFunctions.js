@@ -1,3 +1,4 @@
+// galleryFunctions.js
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { getActor } from "./actor";
 import { updateChecksum } from "./utils";
@@ -6,27 +7,28 @@ import imagesLoaded from 'imagesloaded';
 
 
 import {
-  idlFactory as fileStorageIdlFactory
-} from "../../.dfx/local/canisters/file_storage/file_storage.did.js";
-
+  idlFactory as fileStorageIdlFactory} from "../../.dfx/local/canisters/file_storage/file_storage.did.js";
 import {
-  idlFactory as fileScalingManagerIdlFactory
-} from "../../.dfx/local/canisters/file_scaling_manager/file_scaling_manager.did.js";
+  idlFactory as fileScalingManagerIdlFactory} from "../../.dfx/local/canisters/file_scaling_manager/file_scaling_manager.did.js";
 
-import canisterIds from "../../.dfx/local/canister_ids.json";
+  import canisterIds from "../../.dfx/local/canister_ids.json";
+
 
 let motoko_identity = Ed25519KeyIdentity.generate();
 let fileScalingManagerActor;
 let fileStorageActor;
+let test="";
 let mediaFiles = [];
 let packery;
+var result="";
+
 export async function initActors() {
   fileScalingManagerActor = await getActor(
     canisterIds.file_scaling_manager.local,
     fileScalingManagerIdlFactory,
     motoko_identity
-  );
 
+  );  console.log("fileScalingManagerActor READY  ", fileScalingManagerActor);
   fileScalingManagerActor.init();
 
   fileStorageActor = await getActor(
@@ -35,21 +37,22 @@ export async function initActors() {
     motoko_identity
   );
 
+  console.log("fileStorageActor READY ", fileStorageActor);
   return true;
 }
 
 export async function fetchMediaFiles(currentpath) {
   try {
-    const result = await fileStorageActor.filter_assets_list(currentpath);
-    if (result.ok) {
-      return { ok: result.ok };
-    } else {
-      console.error("Error fetching media files:", result.err);
-      return { err: result.err };
-    }
-  } catch (error) {
-    console.error("Error in fetchMediaFiles:", error);
-    return { err: error };
+    result = await fileStorageActor.filter_assets_list(currentpath);
+} catch (error) {
+  console.error("Error in fetchMediaFiles:", error);
+}
+  if (result.ok) {
+    mediaFiles = result.ok; // Reassign the mediaFiles array
+    return { ok: result.ok };
+  } else {
+    console.error("Error fetching media files:", result.err);
+    return { err: result.err };
   }
 }
 
@@ -113,7 +116,7 @@ export function uploadFile(file, path) {
 
 
 
-export async function removeGridItem(url, container, currentpath) {
+export async function removeGridItem(url, container) {
       const confirmation = confirm("Are you sure you want to delete this image?");
     if (!confirmation) {
         return;  // The user clicked 'Cancel', so we exit the function.
@@ -128,7 +131,7 @@ export async function removeGridItem(url, container, currentpath) {
     console.log("Removing grid item with delete_result:", delete_result);
 
     if (delete_result.ok) {
-      const result = await fetchMediaFiles(currentpath);
+      const result = await fetchMediaFiles(path);
       if (result.ok) {
         mediaFiles = result.ok;
 
@@ -222,20 +225,18 @@ export async function getImageStyles(file) {
 export async function initPackery(container) {
   try {
     if (container) {
-      if (!packery) {
+      if (!packery) { // Check if packery instance already exists
         packery = new Packery(container, {
           itemSelector: '.grid-item',
           gutter: 3,
         });
 
-        imagesLoaded(container, () => {
-          packery.layout();
-        });
+
       }
     } else {
-      console.error("Error getting container for initPackery.");
+      console.error("Error getting container for initPackery. Container : ", container);
     }
   } catch (error) {
-    console.error("Error initializing Packery:", error);
+    console.error("Error try/ catch :", error);
   }
 }

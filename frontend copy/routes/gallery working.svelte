@@ -1,58 +1,54 @@
+<!-- Gallery.svelte -->
 <script>
   import { onMount, afterUpdate, onDestroy } from 'svelte';
   import { tick } from 'svelte';
-  import { initPackery, uploadFile, fetchMediaFiles, updateMediaFiles, getImageStyles, initActors, removeGridItem } from '../src/galleryFunctions.js';
+  import { initPackery, uploadFile, updateMediaFiles, fetchMediaFiles, getImageStyles, initActors, removeGridItem } from '../src/galleryFunctions.js';
   import imagesLoaded from 'imagesloaded';
   import Packery from 'packery';
   import Loader from "../components/Loader.svelte"
   import bin from "../assets/bin.svg"
-  import { useParams } from 'svelte-navigator';
 
-
+  export let path = "";
 
   let packery;
   let container;
-  let mediaFiles = [];
+  let mediaFiles = []; 
   let mediaStyles = [];
   let loading = true;
-const params = useParams();
-export let currentpath = params.id || "";
-
-console.error("export let currentpath =", currentpath);
 
   function handleResize() {
-  if (packery) {
-    setTimeout(() => {
+    if (packery) {
       packery.layout();
-    }, 100);
+    }
   }
-}
 
   onMount(async () => {
-  window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize);
 
-  try {
-    await initActors(currentpath);
-    const result = await fetchMediaFiles(currentpath);
-    if (result.ok) {
-      mediaFiles = result.ok;
-      await updateMediaFiles(mediaStyles,currentpath);
+    try {
+      await initActors();
+      const result = await fetchMediaFiles();
+      if (result.ok) {
+        mediaFiles = result.ok;
+        mediaStyles = await updateMediaFiles();
 
-      await initPackery(container); // Initialize Packery after fetching media files
+        packery = new Packery(container, { itemSelector: '.grid-item', gutter: 1 });
 
-      imagesLoaded(container, () => {
-        if (packery) {
-          packery.layout();
-        }
-      });
-    } else {
-      console.error("Error fetching media files:", result.err);
+        packery.getItemElements().forEach(gridItem => {
+          imagesLoaded(gridItem, function() {
+            packery.layout();
+          });
+        });
+
+      } else {
+        console.error("Error fetching media files:", result.err);
+      }
+      
+    } catch (error) {
+      console.error("Error initializing actors:", error);
     }
-  } catch (error) {
-    console.error("Error initializing actors:", error);
-  }
-  loading = false;
-});
+    loading = false;
+  });
 
   onDestroy(() => {
     window.removeEventListener('resize', handleResize);
@@ -61,7 +57,7 @@ console.error("export let currentpath =", currentpath);
   async function handleFileUpload(files) {
     for (const file of files) {
       try {
-        await uploadFile(file, currentpath);
+        await uploadFile(file);
         console.log("This file was successfully uploaded:", file.name);
       } catch (error) {
         console.error("Error uploading file:", file.name, error);
@@ -69,10 +65,10 @@ console.error("export let currentpath =", currentpath);
     }
 
     await tick();
-    fetchMediaFiles(currentpath).then(async (result) => {
+    fetchMediaFiles().then(async (result) => {
       if (result.ok) {
         mediaFiles = result.ok;
-        await updateMediaFiles(mediaStyles);
+        mediaStyles = await updateMediaFiles();
 
         await tick(); // Wait for Svelte to apply updates
 
@@ -88,7 +84,7 @@ console.error("export let currentpath =", currentpath);
         }
 
         packery.getItemElements().forEach(gridItem => {
-          imagesLoaded(gridItem, function () {
+          imagesLoaded(gridItem, function() {
             console.log('Image loaded, laying out grid again...');
             packery.layout();
           });
@@ -100,7 +96,7 @@ console.error("export let currentpath =", currentpath);
         setTimeout(() => {
           console.log('Forcing Packery layout update...');
           packery.layout();
-        }, 50000);
+        }, 500);
 
       } else {
         console.error("Error fetching media files:", result.err);
@@ -110,23 +106,6 @@ console.error("export let currentpath =", currentpath);
 
   // Whenever mediaFiles is updated, update mediaStyles as well
   $: mediaStyles = mediaFiles.map(file => getImageStyles(file));
-
-  $: {
-  if (mediaFiles.length > 0) {
-    Promise.all(mediaFiles.map(file => getImageStyles(file)))
-      .then(styles => {
-        mediaStyles = styles;
-      })
-      .catch(error => {
-        console.error("Error getting image styles:", error);
-      });
-  }
-}
-
-  // Filter the mediaFiles based on the currentpath
-  $: filteredMediaFiles = mediaFiles.filter(file => file.path === currentpath);
-
-
 </script>
 
 <h1>Gallery</h1>
@@ -134,16 +113,16 @@ console.error("export let currentpath =", currentpath);
 <input type="file" multiple on:change="{e => handleFileUpload(e.target.files)}" />
 
 <div bind:this={container} class="packery-grid">
-  {#each filteredMediaFiles as file, i (file.id)}
+  {#each mediaFiles as file, i (file.id)}
     <div class="grid-item">
-      <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
-      <div class="name"></div>
-      <div class="zone zone-top-left"></div>
-      <div class="zone zone-top-right" on:contextmenu on:click="{() => removeGridItem(file.url, container,currentpath)}">
-        <img src={bin} alt="trash logo" class="trash-icon" />
-      </div>
-      <div class="zone zone-bottom-left"></div>
-      <div class="zone zone-bottom-right"></div>
+        <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}"  />
+        <div class="name"></div>
+        <div class="zone zone-top-left"></div>
+        <div class="zone zone-top-right on:contextmenu=" on:click="{() => removeGridItem(file.url, container)}">
+          <img src={bin} alt="trash logo" class="trash-icon" />
+        </div>
+        <div class="zone zone-bottom-left"></div>
+        <div class="zone zone-bottom-right"></div>
     </div>
   {/each}
 </div>
@@ -162,6 +141,8 @@ console.error("export let currentpath =", currentpath);
     overflow: hidden;
     margin-bottom: -3px;
     padding-top: -3px;
+
+
   }
 
   .grid-item img {

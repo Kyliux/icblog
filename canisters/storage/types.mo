@@ -40,6 +40,7 @@ module {
 		filename : Text;
 		id : Text;
 		owner : Text;
+		path : Text;
 		url : Text;
 	};
 

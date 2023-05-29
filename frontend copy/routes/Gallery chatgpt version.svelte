@@ -6,7 +6,7 @@
 import Packery from 'packery';
 
   import { Ed25519KeyIdentity } from "@dfinity/identity";
-  import { getActor } from "./actor.js";
+  import { getActor } from "../src/actor.js";
   import { updateChecksum }  from "../src/utils.js";
 
   import { tick } from 'svelte';

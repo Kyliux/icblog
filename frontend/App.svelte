@@ -22,6 +22,7 @@
   import { Router, Link, Route } from "svelte-navigator";
   import About from "./routes/about.svelte";
   import Home from "./routes/Home.svelte";
+  import Branches from "./routes/Branches.svelte";
   import Gallery from "./routes/Gallery.svelte";
   import Create from "./routes/Create.svelte";
   import Detail from "./routes/Detail.svelte";
@@ -75,14 +76,14 @@ addTriangleTo(document.body);
                   IC Blogsite
               </a>
               <Link class="nav-link" to="/">Home</Link>
-              <Link class="nav-link" to="/gallery/index">Gallery</Link>
+              <Link class="nav-link" to="/gallery/">Gallery</Link>
               <Link class="nav-link" to="about">About</Link>
           </nav>
       </header>
       <div class="content">
           <Route path="/" component={Home} />
           <Route path="about" component={About} />
-          <Route path="/gallery/:path(.*)" component={Gallery} />
+          <Route path="/gallery/:currentpath" component={Gallery} />
           <Route path="create" component={Create} />
           <Route path="post/:id" component="{Detail}" /> <!-- Dynamic routes for post detail, update and delete-->
           <Route path="update/:id" component="{Update}" /> 

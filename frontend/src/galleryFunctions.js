@@ -53,10 +53,10 @@ export async function fetchMediaFiles(currentpath) {
   }
 }
 
-export async function hasChildren(path) {
+export async function haschildren(path) {
   let lol = false;
   try {
-    lol = await fileStorageActor.haschildrenn(path);
+    lol = await fileStorageActor.haschildren(path);
     console.error("has Children :", lol);
 
     return lol;

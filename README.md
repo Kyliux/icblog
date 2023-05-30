@@ -1,12 +1,13 @@
 # IC BLOG sample app
 
 
-It is the icblog from @lukas_icp with some modification. This is very bad factorized and is the results of a few weeks of try and error after years of not touching it. So svelte and motoko arent in my skillset yet. If you are looking for clean code, well, you can help improving this one ;D
+It is the icblog from @lukas_icp with some modification. This is very bad factorized and is the results of a few weeks of try and error after years of not touching IT and development. So svelte and motoko arent in my skillset yet. If you are looking for clean code, well, you can help improving this one ;D.
+
+ChatGPT also helps me and that really helps alot.
 
 I am adding a Gallery section having the following characteristic :
 - packery gallery
 - Dynamic upload and delete, only possible when you are connected
-
 
 ### Backend
 

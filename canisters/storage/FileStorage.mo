@@ -76,6 +76,7 @@ actor class FileStorage() = this {
 		return chunk_id_count;
 	};
 
+
 	public shared ({ caller }) func commit_batch(batch_id : Text, chunk_ids : [Chunk_ID], asset_properties : AssetProperties, path : Text,) : async Result.Result<Asset_ID, Text> {
 		let ASSET_ID = Utils.generate_uuid();
 		let CANISTER_ID = Principal.toText(Principal.fromActor(this));
@@ -205,7 +206,7 @@ public query func filter_assets_list(path2 : Text) : async Result.Result<[Asset]
     return #ok(Buffer.toArray(assets_list));
 };
 
-public query func haschildrenn(path2 : Text) : async Bool {
+public query func haschildren(path2 : Text) : async Bool {
     for (asset in Map.vals(assets)) {
         if (asset.path == path2) {
             return true;

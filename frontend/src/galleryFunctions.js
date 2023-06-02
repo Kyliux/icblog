@@ -20,7 +20,11 @@ let fileScalingManagerActor;
 let fileStorageActor;
 let mediaFiles = [];
 let packery;
+let actorsInitialized = false;
+
 export async function initActors() {
+  if (!actorsInitialized) {
+
   fileScalingManagerActor = await getActor(
     canisterIds.file_scaling_manager.local,
     fileScalingManagerIdlFactory,
@@ -34,15 +38,26 @@ export async function initActors() {
     fileStorageIdlFactory,
     motoko_identity
   );
+  actorsInitialized = true;
+}
 
   return true;
+}
+
+export function getFileNameWithoutExtension(filename) {
+  const index = filename.lastIndexOf(".");
+  return index !== -1 ? filename.substring(0, index) : filename;
 }
 
 export async function fetchMediaFiles(currentpath) {
   try {
     const result = await fileStorageActor.filter_assets_list(currentpath);
     if (result.ok) {
-      return { ok: result.ok };
+      const files = result.ok.map(file => ({
+        ...file,
+        haschildren: haschildren(`${currentpath}/${getFileNameWithoutExtension(file.filename)}`)
+      }));
+      return { ok: files };
     } else {
       console.error("Error fetching media files:", result.err);
       return { err: result.err };
@@ -54,16 +69,17 @@ export async function fetchMediaFiles(currentpath) {
 }
 
 export async function haschildren(path) {
-  let lol = false;
-  try {
-    lol = await fileStorageActor.haschildren(path);
-    console.error("has Children :", lol);
+  let result = await fileStorageActor.filter_assets_list(path);
+  let hasChildren = false;
 
-    return lol;
-  } catch (error) {
-    console.error("hasChildren", error);
-    return { err: error };
+  if (result.ok) {
+    hasChildren = result.ok.length > 0;
+  } else {
+    console.error("Error fetching assets:", result.err);
   }
+
+  console.log("has Children number size:", hasChildren ? result.ok.length : 0);
+  return hasChildren;
 }
 
  export function uploadFile(file, path) {
@@ -187,8 +203,8 @@ function getAssetId(url) {
   return assetId;
 }
 
-export async function updateMediaFiles(mediaStyles, path) {
-  const result = await fetchMediaFiles(path);
+export async function updateMediaFiles(mediaStyles, currentpath) {
+  const result = await fetchMediaFiles(currentpath);
   if (result.ok) {
     mediaFiles = result.ok;
     mediaStyles = await Promise.all(mediaFiles.map(file => getImageStyles(file)));
@@ -246,10 +262,11 @@ export async function initPackery(container) {
         });
       }
     } else {
-      console.error("Error getting container for initPackery.");
+      console.log("Error getting container for initPackery.");
     }
   } catch (error) {
     console.error("Error initializing Packery:", error);
   }
 }
 
+export { actorsInitialized, fileStorageActor };

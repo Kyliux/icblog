@@ -1,6 +1,6 @@
 // galleryUtils.js
 
-import { uploadFile, fetchMediaFiles, updateMediaFiles, removeGridItem, initActors, initPackery } from './galleryFunctions';
+import { uploadFile, fetchMediaFiles, updateMediaFiles, removeGridItem, initActors, initPackery, fileStorageActor, actorsInitialized } from './galleryFunctions';
 
 let mediaFiles = []; 
 let mediaStyles = [];
@@ -22,7 +22,7 @@ async function handleFileUpload(files, path) {
   fetchMediaFiles(path).then(async (result) => {
     if (result.ok) {
       mediaFiles = result.ok;
-      await updateMediaFiles(mediaStyles,path);
+      await updateMediaFiles(mediaStyles, path);
 
       await tick(); // Wait for Svelte to apply updates
 
@@ -59,14 +59,22 @@ async function handleFileUpload(files, path) {
 
 
 
-async function initializeGallery(container, path) {
+async function initializeGallery(container, currentpath) {
+  console.error("actorsInitialized:", actorsInitialized);
+
   try {
+    if(!actorsInitialized) {
+      console.error("actorsInitialized:", actorsInitialized);
+
     await initActors();
-    await updateMediaFiles(mediaStyles, path);
+  }
+  if(currentpath) //if exist
+    await updateMediaFiles(mediaStyles, currentpath);
     initPackery(container);
   } catch (error) {
     console.error("Error initializing gallery:", error);
   }
+  return true;
 }
 
 export { handleFileUpload, initializeGallery, removeGridItem };

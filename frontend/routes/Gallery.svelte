@@ -4,7 +4,8 @@
   import Packery from 'packery';
   import { useConnect, useCanister } from "@connect2ic/svelte"
 
-  import { initActors, haschildren, fetchMediaFiles, uploadFile, removeGridItem, updateMediaFiles, getImageStyles } from '../src/galleryFunctions.js';
+  import {  initActors, haschildren, getFileNameWithoutExtension, fetchMediaFiles, uploadFile, removeGridItem, updateMediaFiles, getImageStyles } from '../src/galleryFunctions.js';
+  import {initializeGallery } from "../src/galleryUtils.js"
   import Loader from '../components/Loader.svelte';
   import bin from '../assets/bin.svg';
   import { tick } from 'svelte';
@@ -12,23 +13,36 @@
 
   const { isConnected, principal } = useConnect({
     onConnect: async () => {
-      console.log("Connected!")
+      console.log("Connected!");
+      window.removeEventListener('resize', handleResize);
+
+      packery.destroy();
+      packery=false;
       await fetchData();
-      await layoutPackery();
+      initPackery(container);
+
     },
     onDisconnect: async () => {
       console.log("Disconnected!")
+      window.removeEventListener('resize', handleResize);
+
+      packery.destroy();
+      packery=false;
+
       await fetchData();
-      await layoutPackery();
+      initPackery(container);
+
     }
   })
 
   let packery;
+
   let container;
   let mediaFiles = [];
   let mediaStyles = [];
   let loading = true;
   let packeryInitialized = false;
+  let actorinitisalised = false;
 
   async function layoutPackery() {
     await tick(); // Wait for Svelte to apply updates
@@ -62,39 +76,49 @@
   export let id2 = params.id2 || '';
   export let id3 = params.id3 || '';
 
-  let currentpath = "";
+
+  export let currentpath = "";
   if (id3) currentpath = "/" + id1 + "/" + id2 + "/" + id3;
   else if (id2) currentpath = "/" + id1 + "/" + id2;
   else if (id1) currentpath = "/" + id1;
+
+  console.log("id 1 : ", id1,"id 2 : ", id2,"id 3 : ", id3, "currentpath : ", currentpath);
+
 
   onMount(async () => {
     window.addEventListener('resize', handleResize);
 
     try {
-      await initActors();
-      await fetchData();
-      await initPackery(container);
+      actorinitisalised = await initializeGallery();
+      //await initPackery(container);
+
 
     } catch (error) {
       console.error("Error initializing actors:", error);
     }
-    
+
+    await fetchData();
     loading = false;
   });
 
   onDestroy(() => {
     window.removeEventListener('resize', handleResize);
+    packery.destroy();
   });
 
   async function fetchData() {
-    const result = await fetchMediaFiles(currentpath);
+    let result;
+    console.log("We want to fetchdata from : ", currentpath,  "but is actorinitisalised ? --> :" , actorinitisalised);
+    if(actorinitisalised) {
+       result = await fetchMediaFiles(currentpath);
+    
     if (result.ok) {
       mediaFiles = result.ok;
       mediaStyles = await updateMediaFiles(mediaFiles, currentpath);
     } else {
       console.error("Error fetching media files:", result.err);
     }
-
+  }
     setTimeout(() => {
       if (container) {
         initPackery(container);
@@ -165,10 +189,7 @@
     navigate(subgalleryUrl);
   }
 
-  function getFileNameWithoutExtension(filename) {
-    const index = filename.lastIndexOf(".");
-    return index !== -1 ? filename.substring(0, index) : filename;
-  }
+
 
   function popCurrentPath(currentPath) {
     const pathParts =  currentPath.split('/');
@@ -181,8 +202,18 @@
     const newPath = pathParts.join('/');
     return "/gallery" + newPath;
   }
+   // Check if Packery has been initialized
+
+
 
   async function initPackery(container) {
+    if (packery) {
+        // If it has, reload items and layout
+        packery.reloadItems();
+        packery.layout();
+      
+      } else {
+
     if (container) {
       packery = new Packery(container, { itemSelector: '.grid-item' });
 
@@ -199,13 +230,13 @@
       setTimeout(() => {
         console.log('Forcing Packery layout update...');
         packery.layout();
-      }, 500);
+      }, 100);
 
       packeryInitialized = true;
     } else {
       console.error('Error getting container for initPackery.');
     }
-  }
+  } }
 
   // Filter the mediaFiles based on the currentpath
   $: filteredMediaFiles = mediaFiles.filter(file => file.path === currentpath);
@@ -215,11 +246,13 @@
 
 {#if $isConnected}
 <input type="file" multiple on:change="{e => handleFileUpload(e.target.files)}" />
+{/if}
 
 <div bind:this={container} class="packery-grid">
   <div class="grid-item">
     <img src="/frontend/assets/return.svg" on:contextmenu on:click={navigate(popCurrentPath(currentpath))} alt="none" style="width: 200px; height: 200px;" />
   </div>
+  {#if $isConnected}
   {#each filteredMediaFiles as file, i (file.id)}
     <div class="grid-item">
       <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
@@ -230,20 +263,16 @@
       <div class="zone zone-top-right" on:contextmenu on:click={() => removeGridItem(file.url, container, currentpath)}>
         <img src={bin} alt="trash logo" class="trash-icon" />
       </div>
-      <div class="zone zone-bottom-left">{ haschildren(currentpath)}</div>
+      <div class="zone zone-bottom-left">{#await file.haschildren then hasChildrenValue}{hasChildrenValue}{/await}</div>
       <div class="zone zone-bottom-right"></div>
     </div>
   {/each}
-</div>
+
 
 <Loader loading={loading} />
 
 {:else} 
 
-<div bind:this={container} class="packery-grid">
-  <div class="grid-item">
-    <img src="/frontend/assets/return.svg" on:contextmenu on:click={navigate(popCurrentPath(currentpath))} alt="none" style="width: 200px; height: 200px;" />
-  </div>
   {#each filteredMediaFiles as file, i (file.id)}
     <div class="grid-item" on:contextmenu on:click={() => handleGridItemClick(file)}>
       <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
@@ -252,11 +281,11 @@
       </div>
     </div>
   {/each}
-</div>
 
 <Loader loading={loading} />
 
 {/if}
+</div>
 <style>
   .packery-grid {
     position: absolute;

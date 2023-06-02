@@ -202,7 +202,11 @@ public query func filter_assets_list(path2 : Text) : async Result.Result<[Asset]
             assets_list.add(asset_without_content);
         };
     };
-
+	 if (assets_list.size() == 0) {
+        return #err("No assets found for the given path");
+    } else {
+        return #ok(Buffer.toArray(assets_list));
+    };
     return #ok(Buffer.toArray(assets_list));
 };
 

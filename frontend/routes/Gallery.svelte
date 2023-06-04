@@ -10,6 +10,15 @@
   import bin from '../assets/bin.svg';
   import { tick } from 'svelte';
   import imagesLoaded from 'imagesloaded';
+  import Swiper, { Navigation, Pagination } from 'swiper';
+  import 'swiper/css';
+  import 'swiper/css/navigation';
+  import 'swiper/css/pagination';
+
+  import { register } from 'swiper/element/bundle';
+  register();
+
+
 
   const { isConnected, principal } = useConnect({
     onConnect: async () => {
@@ -43,7 +52,63 @@
   let loading = true;
   let packeryInitialized = false;
   let actorinitisalised = false;
+  let swiper; // Variable to hold the swiper instance
+  let showSwiper = false; // Flag to control the visibility of the swiper
+  let initialSlide = 0; // Index of the initially selected slide
 
+
+
+  function initSwiper() {
+
+    // swiper element
+   swiper = document.querySelector('swiper-container');
+
+// swiper parameters
+const swiperParams = {
+  initialSlide: i,
+  slidesPerView: 1,
+  breakpoints: {
+    640: {
+      slidesPerView: 1,
+    },
+    1024: {
+      slidesPerView: 1,
+    },
+  },
+  on: {
+    init() {
+      // ...
+    },
+  },
+};
+
+// now we need to assign all parameters to Swiper element
+Object.assign(swiper, swiperParams);
+
+// and now initialize it
+swiper.initialize();
+
+  }
+
+  function destroySwiper() {
+    if (swiper) {
+      swiper.destroy();
+      swiper = null;
+    }
+  }
+
+  function openSwiper(index) {
+    showSwiper = true;
+    initialSlide = index; // Set the initial slide index to the clicked image index
+    initSwiper();
+  }
+
+  function closeSwiper() {
+    showSwiper = false;
+    destroySwiper();
+  }
+
+  
   async function layoutPackery() {
     await tick(); // Wait for Svelte to apply updates
 
@@ -181,12 +246,14 @@
     }
   }
 
-  async function handleGridItemClick(file) {
-    // Construct the subgallery URL based on the filename without the extension
+  async function handleGridItemClick(file, index) {
     const subgalleryUrl = `/gallery${currentpath}/${getFileNameWithoutExtension(file.filename)}`;
-
-    // Navigate to the subgallery URL
-    navigate(subgalleryUrl);
+    if (await file.haschildren) {
+      // Navigate to the subgallery URL
+      navigate(subgalleryUrl);
+    } else {
+      openSwiper(index);
+    }
   }
 
 
@@ -243,50 +310,109 @@
 </script>
 
 <h1>Gallery</h1>
-
 {#if $isConnected}
 <input type="file" multiple on:change="{e => handleFileUpload(e.target.files)}" />
 {/if}
 
 <div bind:this={container} class="packery-grid">
+  {#if currentpath !== "/index"}
   <div class="grid-item">
-    <img src="/frontend/assets/return.svg" on:contextmenu on:click={navigate(popCurrentPath(currentpath))} alt="none" style="width: 200px; height: 200px;" />
+    <img src="/frontend/assets/return.svg" on:click="{() => navigate(popCurrentPath(currentpath))}" alt="none" style="width: 200px; height: 200px;" />
   </div>
+{/if}
+
   {#if $isConnected}
   {#each filteredMediaFiles as file, i (file.id)}
     <div class="grid-item">
       <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
-      <div class="name" class:editing="{file.editing}">
-        <span on:dblclick={() => startEditing(file)}>{getFileNameWithoutExtension(file.filename)}</span>
-      </div>
-      <div class="zone zone-top-left" on:contextmenu on:click={() => handleGridItemClick(file)} ></div>
-      <div class="zone zone-top-right" on:contextmenu on:click={() => removeGridItem(file.url, container, currentpath)}>
+      {#await file.haschildren}
+      
+    {:then hasChildrenValue}
+      {#if hasChildrenValue}
+        <div class="name" class:editing="{file.editing}">
+          <span on:dblclick={() => startEditing(file)}>{getFileNameWithoutExtension(file.filename)}</span>
+        </div>
+      {/if}
+    {:catch error}
+      <!-- Handle error if needed -->
+    {/await}
+      <div class="zone zone-top-left" on:click={() => handleGridItemClick(file)}></div>
+      <div class="zone zone-top-right" on:click={() => removeGridItem(file.url, container, currentpath)}>
         <img src={bin} alt="trash logo" class="trash-icon" />
       </div>
       <div class="zone zone-bottom-left">{#await file.haschildren then hasChildrenValue}{hasChildrenValue}{/await}</div>
-      <div class="zone zone-bottom-right"></div>
+      <div class="zone zone-bottom-right" on:click={() => openSwiper(i)}></div>
     </div>
   {/each}
-
-
-<Loader loading={loading} />
-
-{:else} 
-
+  {:else}
   {#each filteredMediaFiles as file, i (file.id)}
-    <div class="grid-item" on:contextmenu on:click={() => handleGridItemClick(file)}>
+    <div class="grid-item" on:click={() => handleGridItemClick(file,i)}>
       <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
       <div class="name">
         <span>{getFileNameWithoutExtension(file.filename)}</span>
       </div>
     </div>
   {/each}
-
-<Loader loading={loading} />
-
-{/if}
+  {/if}
+  <Loader loading={loading} />
 </div>
+
+{#if showSwiper}
+  <div class="swiper-overlay">
+    <div class="swiper-close" on:click={closeSwiper}>&times;</div>
+    <swiper-container slides-per-view="1" navigation="true" pagination="true" scrollbar="true">
+        {#each filteredMediaFiles as file, i (file.id)}
+          <swiper-slide>
+            <img src="{file.url}" alt="{file.filename}" />
+          </swiper-slide>
+        {/each}
+    </swiper-container>
+  </div>
+{/if}
+
 <style>
+.swiper-container {
+    width: 100%;
+    height: 100%;
+    background: #000;
+  }
+
+  swiper-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .swiper-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+
+  .swiper-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .swiper-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #fff;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 1000;
+  }
+
   .packery-grid {
     position: absolute;
     overflow: hidden;

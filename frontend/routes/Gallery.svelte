@@ -8,12 +8,12 @@
   import {initializeGallery } from "../src/galleryUtils.js"
   import Loader from '../components/Loader.svelte';
   import bin from '../assets/bin.svg';
+  import enter from '../assets/enter.svg';
+  import gallery from '../assets/gallery.svg';
   import { tick } from 'svelte';
   import imagesLoaded from 'imagesloaded';
   import Swiper, { Navigation, Pagination } from 'swiper';
-  import 'swiper/css';
-  import 'swiper/css/navigation';
-  import 'swiper/css/pagination';
+
 
   import { register } from 'swiper/element/bundle';
   register();
@@ -336,21 +336,33 @@ swiper.initialize();
     {:catch error}
       <!-- Handle error if needed -->
     {/await}
-      <div class="zone zone-top-left" on:click={() => handleGridItemClick(file)}></div>
+      <div class="zone zone-top-left" on:click={() => handleGridItemClick(file)}>
+        <img src={enter} alt="enter logo" class="enter-icon" />
+      </div>
       <div class="zone zone-top-right" on:click={() => removeGridItem(file.url, container, currentpath)}>
         <img src={bin} alt="trash logo" class="trash-icon" />
       </div>
-      <div class="zone zone-bottom-left">{#await file.haschildren then hasChildrenValue}{hasChildrenValue}{/await}</div>
-      <div class="zone zone-bottom-right" on:click={() => openSwiper(i)}></div>
+      <div class="zone zone-bottom-left"></div>
+      <div class="zone zone-bottom-right" on:click={() => openSwiper(i)}>
+        <img src={gallery} alt="gallery logo" class="gallery-icon" />
+      </div>
     </div>
   {/each}
   {:else}
   {#each filteredMediaFiles as file, i (file.id)}
     <div class="grid-item" on:click={() => handleGridItemClick(file,i)}>
       <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
-      <div class="name">
-        <span>{getFileNameWithoutExtension(file.filename)}</span>
-      </div>
+      {#await file.haschildren}
+      
+      {:then hasChildrenValue}
+        {#if hasChildrenValue}
+          <div class="name" class:editing="{file.editing}">
+            <span on:dblclick={() => startEditing(file)}>{getFileNameWithoutExtension(file.filename)}</span>
+          </div>
+        {/if}
+      {:catch error}
+        <!-- Handle error if needed -->
+      {/await}
     </div>
   {/each}
   {/if}
@@ -432,7 +444,7 @@ swiper.initialize();
   }
 
   .grid-item:hover img {
-    filter: brightness(70%);
+    filter: brightness(40%);
   }
 
   .name {
@@ -443,13 +455,14 @@ swiper.initialize();
     padding: 8px;
     background-color: rgba(0, 0, 0, 0.7);
     color: white;
-    font-size: 12px;
+    font-size: 24px;
     pointer-events: none;
-    transition: opacity 0.3s;
+    text-transform: uppercase;
+    font-weight: bold;
+
   }
 
   .name.editing {
-    opacity: 0;
   }
 
   .grid-item .zone {
@@ -460,6 +473,21 @@ swiper.initialize();
     pointer-events: auto;
     box-sizing: border-box;
   }
+
+
+.grid-item:hover .name {
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  width: 100%;
+  height: 100%;
+  top: -5%;
+  left: 0%;
+  transition: background-color 0.3s, opacity 0.3s, transform 0.3s;
+}
+
 
   .grid-item .zone-top-left {
     top: 0;
@@ -498,4 +526,37 @@ swiper.initialize();
   .grid-item .zone:hover {
     background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent white */
   }
+
+
+  .zone-top-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zone-bottom-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.enter-icon,
+.gallery-icon {
+  width: 30px;
+  height: 30px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.zone-top-left:hover .enter-icon,
+.zone-bottom-right:hover .gallery-icon {
+  opacity: 1;
+}
+
+
+
+
+
+
+
 </style>

@@ -2,21 +2,26 @@ ROADMAP :
 
 - packery : ok
 - refactorisation / simplification : in progress
-- multi level images (like a tree) : in progress
+- multi level images (like a tree) : done
 - add a new image / delete an image : done
 - edit image name or path
 - add a new tag / delete a tag
 - add a new category / delete a category
-- user management
+- user management : done
 - image or media management memory size
-- image size view management 
-- delete image if owner 
+- image size view management : done
+- delete image  : done
+- if owner
+- add logo enter gallery in backoffice
+- add progress when uploading 
+- improve UI text etc : in progress
 
 
 TOSOLVE :
-- add packery grid need a refresh to see image added
+- add packery grid need a refresh to see image added : done
 - remove a picture send them to a temporary trash gallery instead of deleting them
 - add default gallery/
-- add "go back" in a more principal branch of the gallery
+- add "go back" in a more principal branch of the gallery : done
+- learn to put everything in production 
 
 

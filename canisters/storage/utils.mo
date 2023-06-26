@@ -18,7 +18,7 @@ module {
     private type GenerateAssetUrlArgs = {
         asset_id : Text;
         canister_id : Text;
-        is_prod : Bool;
+        is_prod : Bool ;
     };
 
     let { hashNat } = Map;
@@ -34,7 +34,7 @@ module {
     public func generate_asset_url(args : GenerateAssetUrlArgs) : Text {
         var url = Text.join(
             "",
-            (["https://", args.canister_id, ".raw.ic0.app", "/asset/", args.asset_id].vals()),
+            (["https://", args.canister_id, ".icp0.io", "/asset/", args.asset_id].vals()),
         );
 
         if (args.is_prod == false) {

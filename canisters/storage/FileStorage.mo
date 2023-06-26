@@ -32,7 +32,7 @@ actor class FileStorage() = this {
 	stable var timer_id : Nat = 0;
 
 	// change me when in production
-	let IS_PROD : Bool = false;
+	let IS_PROD : Bool = true;
 
 	let { nhash; thash } = Map;
 

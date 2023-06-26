@@ -13,7 +13,7 @@
   /*
    * Import canister definitions like this:
   */
-   import * as blog from "../.dfx/local/canisters/blog"   
+   import * as blog from "../src/declarations/blog"   
 
 
   /*
@@ -28,6 +28,9 @@
   import Detail from "./routes/Detail.svelte";
   import Update from "./routes/Update.svelte";
   import Delete from "./routes/Delete.svelte";
+  import { onMount, afterUpdate } from 'svelte';
+
+
 
 
 
@@ -43,24 +46,9 @@
   });
 
 
-  function addTriangleTo(target) {
-  var dimensions = target.getClientRects()[0];
-  var pattern = Trianglify({
-    width: window.innerWidth,
-    height: window.innerHeight, // Use window.innerHeight for full-page background
-    cell_size: 100, // Adjust the cell size as needed
-    variance: 1,
-    x_colors: 'Blues', // Adjust the color scheme as desired
-  });
-  target.style['background-image'] = 'url(' + pattern.png() + ')';
-  target.style['background-repeat'] = 'no-repeat';
-  target.style['background-size'] = 'cover';
-}
 
-addTriangleTo(document.body);
 
 </script>
-
 
 
 <Connect2ICProvider client={client}>
@@ -101,6 +89,9 @@ addTriangleTo(document.body);
   /* 
     Global styles
   */*
+
+
+
   body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
@@ -108,7 +99,17 @@ addTriangleTo(document.body);
       sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      color: #424242;
+
+
+  }
+
+  .trianglify-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
   }
 
   button {

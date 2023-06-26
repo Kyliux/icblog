@@ -49,7 +49,6 @@
     }
 
     onMount(list_posts)
-
 </script>
 <img src="{logo}" alt="">
 <h1>Sample blog app</h1>

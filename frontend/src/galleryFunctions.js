@@ -7,13 +7,13 @@ import imagesLoaded from 'imagesloaded';
 
 import {
   idlFactory as fileStorageIdlFactory
-} from "../../.dfx/local/canisters/file_storage/file_storage.did.js";
+} from "../../src/declarations/file_storage/file_storage.did.js";
 
 import {
   idlFactory as fileScalingManagerIdlFactory
-} from "../../.dfx/local/canisters/file_scaling_manager/file_scaling_manager.did.js";
+} from "../../src/declarations/file_scaling_manager/file_scaling_manager.did.js";
 
-import canisterIds from "../../.dfx/local/canister_ids.json";
+import canisterIds from "../../canister_ids.json";
 
 let motoko_identity = Ed25519KeyIdentity.generate();
 let fileScalingManagerActor;
@@ -26,7 +26,7 @@ export async function initActors() {
   if (!actorsInitialized) {
 
   fileScalingManagerActor = await getActor(
-    canisterIds.file_scaling_manager.local,
+    canisterIds.file_scaling_manager.ic,
     fileScalingManagerIdlFactory,
     motoko_identity
   );

@@ -58,14 +58,15 @@
 
 
 
-  function initSwiper() {
+  function initSwiper(index) {
 
     // swiper element
    swiper = document.querySelector('swiper-container');
+   console.log('INIT SWIPER WITH INDEX : ', index);
 
 // swiper parameters
 const swiperParams = {
-  initialSlide: i,
+  initialSlide: index,
   slidesPerView: 1,
   breakpoints: {
     640: {
@@ -100,7 +101,8 @@ swiper.initialize();
   function openSwiper(index) {
     showSwiper = true;
     initialSlide = index; // Set the initial slide index to the clicked image index
-    initSwiper();
+    destroySwiper(); // Destroy the existing swiper instance
+    initSwiper(initialSlide);
   }
 
   function closeSwiper() {
@@ -324,7 +326,7 @@ swiper.initialize();
   {#if $isConnected}
   {#each filteredMediaFiles as file, i (file.id)}
     <div class="grid-item">
-      <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
+      <img src="{file.url}" alt="{file.url}" style="{mediaStyles[i]}" />
       {#await file.haschildren}
       
     {:then hasChildrenValue}
@@ -351,7 +353,7 @@ swiper.initialize();
   {:else}
   {#each filteredMediaFiles as file, i (file.id)}
     <div class="grid-item" on:click={() => handleGridItemClick(file,i)}>
-      <img src="{file.url}" alt="{file.filename}" style="{mediaStyles[i]}" />
+      <img src="{file.url}" alt="{file.url}" style="{mediaStyles[i]}" />
       {#await file.haschildren}
       
       {:then hasChildrenValue}
@@ -392,6 +394,7 @@ swiper.initialize();
   swiper-slide {
     display: flex;
     align-items: center;
+    height:auto;
     justify-content: center;
   }
 

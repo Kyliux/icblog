@@ -13,7 +13,6 @@
  
 
 <div id="root"> </div>
-<script src="/frontend/assets/trianglify.min.js"></script>
 
 <script type="module">
   /**
@@ -29,19 +28,7 @@
 
 <script type="module" src="/frontend/main.js"></script>
 
-<script>
 
-function addTriangleTo(target) {
-    var dimensions = target.getClientRects()[0];
-    var pattern = Trianglify({
-        width: window.innerWidth, 
-        height: window.innerWidth,
-      });
-    target.style['background-image'] = 'url(' + pattern.png() + ')';
-}
-
-addTriangleTo(document.body)
-</script>
 
 </body>
 </html>

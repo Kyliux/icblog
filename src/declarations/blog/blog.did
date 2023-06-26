@@ -1,0 +1,75 @@
+type UpdatePostError = 
+ variant {
+   EmptyTitle;
+   PostNotFound;
+   UserNotAuthenticated;
+ };
+type Time = int;
+type Result_3 = 
+ variant {
+   err: CreatePostError;
+   ok;
+ };
+type Result_2 = 
+ variant {
+   err: DeletePostError;
+   ok;
+ };
+type Result_1 = 
+ variant {
+   err: GetPostError;
+   ok: Post;
+ };
+type Result = 
+ variant {
+   err: UpdatePostError;
+   ok;
+ };
+type PostId = nat;
+type Post = 
+ record {
+   author: principal;
+   content: text;
+   description: text;
+   published: bool;
+   tags: vec text;
+   time_created: Time;
+   time_updated: Time;
+   title: text;
+ };
+type GetPostError = variant {PostNotFound;};
+type DeletePostError = variant {UserNotAuthenticated;};
+type CreatePostError = 
+ variant {
+   EmptyTitle;
+   PostNotFound;
+   UserNotAuthenticated;
+ };
+service : {
+  create:
+   (record {
+      content: text;
+      description: text;
+      published: bool;
+      tags: vec text;
+      title: text;
+    }) -> (Result_3);
+  delete: (PostId) -> (Result_2);
+  get: (PostId) -> (Result_1) query;
+  list_all: () -> (vec record {
+                         PostId;
+                         Post;
+                       }) query;
+  list_published: () -> (vec record {
+                               PostId;
+                               Post;
+                             }) query;
+  update: (PostId,
+   record {
+     content: text;
+     description: text;
+     published: bool;
+     tags: vec text;
+     title: text;
+   }) -> (Result);
+}

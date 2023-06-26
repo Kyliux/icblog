@@ -1,6 +1,6 @@
 import { HttpAgent, Actor } from "@dfinity/agent";
 
-const HOST = "http://127.0.0.1:8080/";
+const HOST = "https://icp0.io";
 
 const getActor = async (canisterId, idlFactory, identity) => {
   console.log('getActor called with:', { canisterId, idlFactory, identity });

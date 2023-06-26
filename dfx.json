@@ -35,7 +35,7 @@
   },
   "networks": {
     "local": {
-      "bind": "127.0.0.1:8080",
+      "bind": "127.0.0.1:8082",
       "type": "ephemeral"
     },
     "ic": {
@@ -45,5 +45,6 @@
       "type": "persistent"
     }
   },
+  "dfx": "0.14.0",
   "version": 1
 }

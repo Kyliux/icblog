@@ -1,3 +1,9 @@
+# Current state
+
+- Deploy to local and works
+- Does **not** deploy in the IC mainnet // pls help I am lost
+
+
 # IC BLOG sample app
 
 
@@ -54,7 +60,7 @@ if(Principal.isAnonymous(msg.caller)){ // Only allows signed users to create a p
     return #err(#UserNotAuthenticated); // If the caller is anonymous Principal "2vxsx-fae" then return an error
 };
 ```
-## Deploy to the mainnet
+## Deploy to the mainnet DO NOT WORK; HAVE ERROR MSG
 
 If you have working local development replica, you can deploy your project to the mainnet by running this command:
 ```
